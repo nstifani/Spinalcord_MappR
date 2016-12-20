@@ -28,19 +28,44 @@ ErrorDialog.Function<-function(ErrorMessage, FixMessage){
 }
 
 SelectCSVDir.Function <- function(DialogMessage, DirPathObjectName, DirNameObjectName, ListFilePathObjectName, ParentDirPathObjectName){
+  CSVDirPass=0
+  
+  while(CSVDirPass!=1){
   DirPath<-tk_choose.dir(default=getwd(), caption=DialogMessage) # Prompt the user to select an inputdirectory
   DirName<-basename(DirPath) # Defines Name of Input directory
   ListFilePath<-list.files(path=DirPath, pattern=".csv", all.files=FALSE, full.names=TRUE, ignore.case = TRUE) # Get the list of CSV filepath within InputDir
-  
+
   if(length(ListFilePath)==0){
-    ErrorDialog.Function(ErrorMessage="The selected folder does not contain any .CSV file.", FixMessage="Please select a folder containing at least one CSV file.")
-  }else{
+   ErrorMessageInputFile=paste0("Sorry, the folder ",DirName," does not contain any .CSV file.")
+   FixMessageInputFile="Please select a folder containing at least one CSV file."
+   ErrorDialog.Function(ErrorMessage=ErrorMessageInputFile, FixMessage=FixMessageInputFile)
+   NbCSVFilePass=0
+  } else {
+    NbCSVFilePass=1
+  }
+  if(length(ListFilePath)>0){
+    NameCSVFilePass=1
+    for(CSVFileI in 1: length(ListFilePath)){ ## Screen all CSV files to make sure they have only one .
+      FilePathCSVFileI <- ListFilePath[CSVFileI]
+      FilenameCSVFileI <- basename(FilePathCSVFileI)
+      FilenameCSVFileIComponents <- unlist(strsplit(as.character(FilenameCSVFileI),".", fixed=TRUE))
+      if(length(FilenameCSVFileIComponents)!=2){ # If more than one . make an error
+      NameCSVFilePass=0
+      ErrorMessageInputFile=paste0("Sorry, the file ",FilenameCSVFileI," contains more than one \".\" character.")
+      FixMessageInputFile="Please ensure that all CSV File contain only one \".\" for the file extension."
+      ErrorDialog.Function(ErrorMessage=paste0("Sorry ",FilenameCSVFileI," contains more than one \".\" character."), FixMessage="Please ensure that all CSV File contain only one \".\" for the file extension.")
+      }
+    }
+  }
+  if(NbCSVFilePass==1 && NameCSVFilePass==1){
+    CSVDirPass=1
+  }
+  }
     assign(DirPathObjectName, DirPath, envir = .GlobalEnv) # Assign the Variable to the global environment
     assign(DirNameObjectName, DirName, envir = .GlobalEnv) # Assign the Variable to the global environment
     assign(ListFilePathObjectName, ListFilePath, envir = .GlobalEnv) # Assign the Variable to the global environment
     assign(ParentDirPathObjectName, dirname(DirPath), envir = .GlobalEnv)
   }
-}
 
 SelectDir.Function <- function(DialogMessage, DirPathObjectName, DirNameObjectName, ParentDirPathObjectName){
   DirPath<-tk_choose.dir(default=getwd(), caption=DialogMessage) # Prompt the user to select an inputdirectory
@@ -50,12 +75,13 @@ SelectDir.Function <- function(DialogMessage, DirPathObjectName, DirNameObjectNa
     assign(ParentDirPathObjectName, dirname(DirPath), envir = .GlobalEnv)
 }
 
-
 MergeCSVFileList.Function <- function(ListCSVFilePath, MergedObjectName){
   for (FileI in 1:length(ListCSVFilePath)){
     CSVFilePathI <- ListCSVFilePath[FileI] # Defines the Path of the File to be processed
     CSVFilenameI <- basename(CSVFilePathI) # Get the Filename of the File being processed
-    CSVFilenameINoExt <- gsub(".csv","", CSVFilenameI, ignore.case = TRUE) # Create a filename without extension
+    CSVFilenameICompoments <- unlist(strsplit(as.character(CSVFilenameI),".", fixed=TRUE))
+    CSVFilenameINoExt<-CSVFilenameICompoments[1]
+    #  CSVFilenameINoExt <- gsub(".csv","", CSVFilenameI, ignore.case = TRUE) # Create a filename without extension
     DataI <- read.table(CSVFilePathI, sep = ",", header = TRUE, nrows = 100000)
     DataI$File_ID<-rep(CSVFilenameINoExt, dim(DataI)[1])
     if(FileI==1){
@@ -101,14 +127,12 @@ InstallRequiredPackage.Function(ListPackage=ListRequiredPackage)
 
 # Reading Data ------------------------------------------------------------
 # Select the Input Data  
-while(!exists("ListInputFilePath") || length(ListInputFilePath)==0){
-  SelectCSVDir.Function(DialogMessage = "Choose the folder containing the CSV Data Files.",
+SelectCSVDir.Function(DialogMessage = "Choose the folder containing the CSV Data Files.",
                         DirPathObjectName="InputDirPath",
                         DirNameObjectName="InputDirName",
                         ListFilePathObjectName="ListInputFilePath",
                         ParentDirPathObjectName="ParentInputDirPath"
   )
-}
 
 # Merge all InputFiles into one
 MergeCSVFileList.Function(ListCSVFilePath=ListInputFilePath, MergedObjectName="MergedInputData")
@@ -152,7 +176,7 @@ for(RowI in 1:dim(MetaData)[1]){
   MetaData$DE_L_X.Pixel[RowI]<- MetaData$DE_L_X[RowI]
   MetaData$DE_L_Y.Pixel[RowI]<- MetaData$DE_L_Y[RowI]
   
-  else if(MetaData$Resolution_Unit[RowI]!="pixels") { ## If coordinates are NOT in pixel
+ } else if(MetaData$Resolution_Unit[RowI]!="pixels") { ## If coordinates are NOT in pixel
     ImageResolution<-as.numeric(MetaData$Resolution_Pixels_per_Unit[RowI])
     # If Resolution_Unit is not pixels then we need to convert coordinates in pixels
     MetaData$CC_X.Pixel[RowI]<-MetaData$CC_X[RowI]*ImageResolution
@@ -216,7 +240,7 @@ for(RowI in 1:dim(MetaData)[1]){
     MetaData$DE_L_Y.Scaled[RowI]<- scale(MetaData$DE_L_Y.Pixel.Centered[RowI], center=FALSE, scale=MetaData$DE_L_Y.Pixel.Centered[RowI])
     
     
-    List_Filename_Variables<- unlist(strsplit(as.character(MetaData$File_ID[RowI]),"_"))
+    List_Filename_Variables<- unlist(strsplit(as.character(MetaData$File_ID[RowI]),"_", fixed = TRUE))
     MetaData$Date<-List_Filename_Variables[1]
     MetaData$Subject_ID<-List_Filename_Variables[2]
     MetaData$Group<-List_Filename_Variables[3]
@@ -228,6 +252,8 @@ for(RowI in 1:dim(MetaData)[1]){
     }  # If 
   } ## End of for each Row and center and scale the data
 
+
+write.table(MetaData, file=file.path(OutputDirPath, "MetaData_Coordinates_Processed_v0.csv"), row.names=FALSE, sep = ",")
 
   
   
@@ -244,13 +270,18 @@ MergedInputData$File_ID<-as.factor(MergedInputData$File_ID)
 for (FileI in 1:nlevels(MergedInputData$File_ID)){
   File_IDI<-levels(MergedInputData$File_ID)[FileI]
   
-  InputDataI<-MergedInputData[MergedInputData$File_ID==File_IDI,]
-  
+InputDataI<-MergedInputData[MergedInputData$File_ID==File_IDI,]
+InputDataI$Channel<-as.character(InputDataI$Label)
+for(RowI in 1:length(InputDataI$Label)){
+  InputDataI$Channel[RowI]<- gsub(as.character(InputDataI$File_ID[RowI]), "", as.character(InputDataI$Label[RowI]))
+  InputDataI$Channel[RowI]<- gsub(".tif:", "", as.character(InputDataI$Channel[RowI]))
+}
+
   ## Get the coordinates from the MetaData
   ## If a perfect match on fileIDs
   #MetaDataI<-MetaData[MetaData$File_ID==File_IDI,]
   ## If a partial match on fileIDs
-    MetaDataI<-subset(MetaData, pmatch(MetaData$File_ID,File_IDI)==1)
+    MetaDataI<-subset(MetaData, pmatch(MetaData$File_ID, File_IDI)==1)
   
     if(MetaDataI$Resolution_Unit!="pixels") {
       ImageResolutionI<-as.numeric(MetaDataI$Resolution_Pixels_per_Unit)
@@ -261,7 +292,7 @@ for (FileI in 1:nlevels(MergedInputData$File_ID)){
       InputDataI$Y.Pixel<- InputDataI$Y
     }
     
-    ## 
+  
   # Center the data on the central canal
   InputDataI$X.Pixel.Centered<-scale(InputDataI$X.Pixel, center=MetaDataI$CC_X.Pixel, scale=FALSE)
   InputDataI$Y.Pixel.Centered<-scale(InputDataI$Y.Pixel, center=MetaDataI$CC_Y.Pixel, scale=FALSE)
@@ -346,11 +377,6 @@ for (FileI in 1:nlevels(MergedInputData$File_ID)){
   
   dev.off() # Close and save the graph
   
-  # Calculate the Graph Range
-  YRangeLim=max(c(abs(floor(min(OutputData$Y.Pixel.Centered))), abs(ceiling(max(OutputData$Y.Pixel.Centered)))))
-  XRangeLim=max(c(abs(floor(min(OutputData$X.Pixel.Centered))), abs(ceiling(max(OutputData$X.Pixel.Centered)))))
-  AxeLim=max(c(XRangeLim,YRangeLim))
-
   
   # Plot RAW coordinates for each file
   cairo_pdf(file.path(OutputDirPath, "Graphs", paste0(File_IDI,"_Raw_Graph.pdf"))) # Open the graph as pdf
@@ -359,8 +385,8 @@ for (FileI in 1:nlevels(MergedInputData$File_ID)){
        bty="n",
        #yaxt="n",
        #xaxp=c(0,600,3),
-      ylim=c(-2000,2000),
-      xlim=c(-2000,2000),
+      ylim=c(-MetaDataI$Total_Height_Pixels/2,MetaDataI$Total_Height_Pixels/2),
+      xlim=c(-MetaDataI$Total_Width_Pixels/2,MetaDataI$Total_Width_Pixels/2),
       type="p", col="deepskyblue",
        main=File_IDI, ylab="Relative position to CC (pixel)", xlab="Relative position to CC (pixel)", lwd=1)
     
@@ -384,18 +410,13 @@ for (FileI in 1:nlevels(MergedInputData$File_ID)){
 
 
 # Bring the Group and resolution from the Metadata to the output data
-OutputData$Date<-""
-OutputData$Subject_ID<-""
-OutputData$Group<-""
-
 OutputData$File_ID<-as.character(OutputData$File_ID)
 MetaData$Group<-as.character(MetaData$Group)
 
 for(RowI in 1: dim(OutputData)[1]){
   File_IDRowI<-OutputData$File_ID[RowI]
-  
   Group_RowI<-subset(MetaData, pmatch(MetaData$File_ID,File_IDRowI)==1, Group)
-  OutputData$Group[RowI]<-Group_RowI
+  OutputData$Group[RowI]<-as.character(Group_RowI)
 }
 
 OutputData$Group<-as.factor(as.character(OutputData$Group))
