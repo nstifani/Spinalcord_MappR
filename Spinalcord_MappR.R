@@ -423,7 +423,7 @@ OutputData$Group<-as.factor(as.character(OutputData$Group))
 OutputData$File_ID<-as.factor(OutputData$File_ID)
 MetaData$Group<-as.factor(MetaData$Group)
 
-write.table(OutputData, file=file.path(OutputDirPath, "Merged_Data_Coordinates_Processed.csv"), row.names=FALSE, sep = ",")
+write.table(OutputData, file=file.path(OutputDirPath, "Data_Coordinates_Processed.csv"), row.names=FALSE, sep = ",")
 
 write.table(MetaData, file=file.path(OutputDirPath, "MetaData_Coordinates_Processed.csv"), row.names=FALSE, sep = ",")
 
