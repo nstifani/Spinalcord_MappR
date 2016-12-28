@@ -141,9 +141,11 @@ SelectCSVDir.Function(DialogMessage = "Choose the folder containing the CSV Data
 MergeCSVFileList.Function(ListCSVFilePath=ListInputFilePath, MergedObjectName="MergedInputData")
 
 
-# Select the MetaData and Registrtion coordinates
-SelectCSVFile.Function(DialogMessage="Select the MetaData and Registration Coordinates CSV File", DataObjectName = "MetaData")
+# Select the RegistrationData and Registrtion coordinates
+SelectCSVFile.Function(DialogMessage="Select the Registration Coordinates CSV File", DataObjectName = "RegistrationData")
 
+# Select the MarkerTypes
+SelectCSVFile.Function(DialogMessage="Select the Marker Types CSV File", DataObjectName = "MarkerData")
 
 # Create OuputDirectory and Subdirectory
 CreateOutputDir.Function(OutputDirLocation=ParentInputDirPath, 
@@ -152,134 +154,139 @@ CreateOutputDir.Function(OutputDirLocation=ParentInputDirPath,
 
 
 
-# Process MetaData  ---------------------------------------------------
+# Process RegistrationData  ---------------------------------------------------
 # Get the Resolution Unit as character
-MetaData$Resolution_Unit<-as.character(MetaData$Resolution_Unit)
+RegistrationData$Resolution_Unit<-as.character(RegistrationData$Resolution_Unit)
 
-# Center the Metadata for each Row according to the CC position
+# Center the RegistrationData for each Row according to the CC position
 # If coordinates are already in pixel just copy them
 # If coordinates are in scaled distance convert them to pixels
 
-for(RowI in 1:dim(MetaData)[1]){
-  if(MetaData$Resolution_Unit[RowI]=="pixels") {  
-    MetaData$CC_X_Pixel[RowI]<- MetaData$CC_X[RowI]
-    MetaData$CC_Y_Pixel[RowI]<- MetaData$CC_Y[RowI]
+for(RowI in 1:dim(RegistrationData)[1]){
+  if(RegistrationData$Resolution_Unit[RowI]=="pixels") {  
+    RegistrationData$CC_X_Pixel[RowI]<- RegistrationData$CC_X[RowI]
+    RegistrationData$CC_Y_Pixel[RowI]<- RegistrationData$CC_Y[RowI]
     
-    MetaData$DE_R_X_Pixel[RowI]<- MetaData$DE_R_X[RowI]
-    MetaData$DE_R_Y_Pixel[RowI]<- MetaData$DE_R_Y[RowI]
+    RegistrationData$DE_R_X_Pixel[RowI]<- RegistrationData$DE_R_X[RowI]
+    RegistrationData$DE_R_Y_Pixel[RowI]<- RegistrationData$DE_R_Y[RowI]
     
-    MetaData$LE_R_X_Pixel[RowI]<- MetaData$LE_R_X[RowI]
-    MetaData$LE_R_Y_Pixel[RowI]<- MetaData$LE_R_Y[RowI]
+    RegistrationData$LE_R_X_Pixel[RowI]<- RegistrationData$LE_R_X[RowI]
+    RegistrationData$LE_R_Y_Pixel[RowI]<- RegistrationData$LE_R_Y[RowI]
     
-    MetaData$VE_R_X_Pixel[RowI]<- MetaData$VE_R_X[RowI]
-    MetaData$VE_R_Y_Pixel[RowI]<- MetaData$VE_R_Y[RowI]
+    RegistrationData$VE_R_X_Pixel[RowI]<- RegistrationData$VE_R_X[RowI]
+    RegistrationData$VE_R_Y_Pixel[RowI]<- RegistrationData$VE_R_Y[RowI]
     
-    MetaData$VE_L_X_Pixel[RowI]<- MetaData$VE_L_X[RowI]
-    MetaData$VE_L_Y_Pixel[RowI]<- MetaData$VE_L_Y[RowI]
+    RegistrationData$VE_L_X_Pixel[RowI]<- RegistrationData$VE_L_X[RowI]
+    RegistrationData$VE_L_Y_Pixel[RowI]<- RegistrationData$VE_L_Y[RowI]
     
-    MetaData$LE_L_X_Pixel[RowI]<- MetaData$LE_L_X[RowI]
-    MetaData$LE_L_Y_Pixel[RowI]<- MetaData$LE_L_Y[RowI]
+    RegistrationData$LE_L_X_Pixel[RowI]<- RegistrationData$LE_L_X[RowI]
+    RegistrationData$LE_L_Y_Pixel[RowI]<- RegistrationData$LE_L_Y[RowI]
     
-    MetaData$DE_L_X_Pixel[RowI]<- MetaData$DE_L_X[RowI]
-    MetaData$DE_L_Y_Pixel[RowI]<- MetaData$DE_L_Y[RowI]
+    RegistrationData$DE_L_X_Pixel[RowI]<- RegistrationData$DE_L_X[RowI]
+    RegistrationData$DE_L_Y_Pixel[RowI]<- RegistrationData$DE_L_Y[RowI]
     
-  } else if(MetaData$Resolution_Unit[RowI]!="pixels") { ## If coordinates are NOT in pixel
-    ImageResolution<-as.numeric(MetaData$Resolution_Pixels_per_Unit[RowI])
+  } else if(RegistrationData$Resolution_Unit[RowI]!="pixels") { ## If coordinates are NOT in pixel
+    ImageResolution<-as.numeric(RegistrationData$Resolution_Pixels_per_Unit[RowI])
     # If Resolution_Unit is not pixels then we need to convert coordinates in pixels
-    MetaData$CC_X_Pixel[RowI]<-MetaData$CC_X[RowI]*ImageResolution
-    MetaData$CC_Y_Pixel[RowI]<-MetaData$CC_Y[RowI]*ImageResolution
+    RegistrationData$CC_X_Pixel[RowI]<-RegistrationData$CC_X[RowI]*ImageResolution
+    RegistrationData$CC_Y_Pixel[RowI]<-RegistrationData$CC_Y[RowI]*ImageResolution
     
-    MetaData$DE_R_X_Pixel[RowI]<-MetaData$DE_R_X[RowI]*ImageResolution
-    MetaData$DE_R_Y_Pixel[RowI]<-MetaData$DE_R_Y[RowI]*ImageResolution
+    RegistrationData$DE_R_X_Pixel[RowI]<-RegistrationData$DE_R_X[RowI]*ImageResolution
+    RegistrationData$DE_R_Y_Pixel[RowI]<-RegistrationData$DE_R_Y[RowI]*ImageResolution
     
-    MetaData$LE_R_X_Pixel[RowI]<-MetaData$LE_R_X[RowI]*ImageResolution
-    MetaData$LE_R_Y_Pixel[RowI]<-MetaData$LE_R_Y[RowI]*ImageResolution
+    RegistrationData$LE_R_X_Pixel[RowI]<-RegistrationData$LE_R_X[RowI]*ImageResolution
+    RegistrationData$LE_R_Y_Pixel[RowI]<-RegistrationData$LE_R_Y[RowI]*ImageResolution
     
-    MetaData$VE_R_X_Pixel[RowI]<-MetaData$VE_R_X[RowI]*ImageResolution
-    MetaData$VE_R_Y_Pixel[RowI]<-MetaData$VE_R_Y[RowI]*ImageResolution
+    RegistrationData$VE_R_X_Pixel[RowI]<-RegistrationData$VE_R_X[RowI]*ImageResolution
+    RegistrationData$VE_R_Y_Pixel[RowI]<-RegistrationData$VE_R_Y[RowI]*ImageResolution
     
-    MetaData$VE_L_X_Pixel[RowI]<-MetaData$VE_L_X[RowI]*ImageResolution
-    MetaData$VE_L_Y_Pixel[RowI]<-MetaData$VE_L_Y[RowI]*ImageResolution
+    RegistrationData$VE_L_X_Pixel[RowI]<-RegistrationData$VE_L_X[RowI]*ImageResolution
+    RegistrationData$VE_L_Y_Pixel[RowI]<-RegistrationData$VE_L_Y[RowI]*ImageResolution
     
-    MetaData$LE_L_X_Pixel[RowI]<-MetaData$LE_L_X[RowI]*ImageResolution
-    MetaData$LE_L_Y_Pixel[RowI]<-MetaData$LE_L_Y[RowI]*ImageResolution
+    RegistrationData$LE_L_X_Pixel[RowI]<-RegistrationData$LE_L_X[RowI]*ImageResolution
+    RegistrationData$LE_L_Y_Pixel[RowI]<-RegistrationData$LE_L_Y[RowI]*ImageResolution
     
-    MetaData$DE_L_X_Pixel[RowI]<-MetaData$DE_L_X[RowI]*ImageResolution
-    MetaData$DE_L_Y_Pixel[RowI]<-MetaData$DE_L_Y[RowI]*ImageResolution
+    RegistrationData$DE_L_X_Pixel[RowI]<-RegistrationData$DE_L_X[RowI]*ImageResolution
+    RegistrationData$DE_L_Y_Pixel[RowI]<-RegistrationData$DE_L_Y[RowI]*ImageResolution
   } ## End of create Pixel Coordinates
   
   # Center the registration coordinates according to the CC position
-  MetaData$CC_X_Pixel_Centered[RowI]<-scale(MetaData$CC_X_Pixel[RowI], center=MetaData$CC_X_Pixel[RowI], scale=FALSE)
-  MetaData$DE_R_X_Pixel_Centered[RowI]<-scale(MetaData$DE_R_X_Pixel[RowI], center=MetaData$CC_X_Pixel[RowI], scale=FALSE)
-  MetaData$LE_R_X_Pixel_Centered[RowI]<-scale(MetaData$LE_R_X_Pixel[RowI], center=MetaData$CC_X_Pixel[RowI], scale=FALSE)
-  MetaData$VE_R_X_Pixel_Centered[RowI]<-scale(MetaData$VE_R_X_Pixel[RowI], center=MetaData$CC_X_Pixel[RowI], scale=FALSE)
-  MetaData$VE_L_X_Pixel_Centered[RowI]<-scale(MetaData$VE_L_X_Pixel[RowI], center=MetaData$CC_X_Pixel[RowI], scale=FALSE)
-  MetaData$LE_L_X_Pixel_Centered[RowI]<-scale(MetaData$LE_L_X_Pixel[RowI], center=MetaData$CC_X_Pixel[RowI], scale=FALSE)
-  MetaData$DE_L_X_Pixel_Centered[RowI]<-scale(MetaData$DE_L_X_Pixel[RowI], center=MetaData$CC_X_Pixel[RowI], scale=FALSE)
+  RegistrationData$CC_X_Pixel_Centered[RowI]<-scale(RegistrationData$CC_X_Pixel[RowI], center=RegistrationData$CC_X_Pixel[RowI], scale=FALSE)
+  RegistrationData$DE_R_X_Pixel_Centered[RowI]<-scale(RegistrationData$DE_R_X_Pixel[RowI], center=RegistrationData$CC_X_Pixel[RowI], scale=FALSE)
+  RegistrationData$LE_R_X_Pixel_Centered[RowI]<-scale(RegistrationData$LE_R_X_Pixel[RowI], center=RegistrationData$CC_X_Pixel[RowI], scale=FALSE)
+  RegistrationData$VE_R_X_Pixel_Centered[RowI]<-scale(RegistrationData$VE_R_X_Pixel[RowI], center=RegistrationData$CC_X_Pixel[RowI], scale=FALSE)
+  RegistrationData$VE_L_X_Pixel_Centered[RowI]<-scale(RegistrationData$VE_L_X_Pixel[RowI], center=RegistrationData$CC_X_Pixel[RowI], scale=FALSE)
+  RegistrationData$LE_L_X_Pixel_Centered[RowI]<-scale(RegistrationData$LE_L_X_Pixel[RowI], center=RegistrationData$CC_X_Pixel[RowI], scale=FALSE)
+  RegistrationData$DE_L_X_Pixel_Centered[RowI]<-scale(RegistrationData$DE_L_X_Pixel[RowI], center=RegistrationData$CC_X_Pixel[RowI], scale=FALSE)
   
-  MetaData$CC_Y_Pixel_Centered[RowI]<-scale(MetaData$CC_Y_Pixel[RowI], center=MetaData$CC_Y_Pixel[RowI], scale=FALSE)
-  MetaData$DE_R_Y_Pixel_Centered[RowI]<-scale(MetaData$DE_R_Y_Pixel[RowI], center=MetaData$CC_Y_Pixel[RowI], scale=FALSE)
-  MetaData$LE_R_Y_Pixel_Centered[RowI]<- 0 ## By default we use the lateral edge a Y=0
-  #MetaData$LE_R_Y_Pixel_Centered[RowI]<-scale(MetaData$LE_R_Y_Pixel[RowI], center=MetaData$CC_Y_Pixel[RowI], scale=FALSE)
-  MetaData$VE_R_Y_Pixel_Centered[RowI]<-scale(MetaData$VE_R_Y_Pixel[RowI], center=MetaData$CC_Y_Pixel[RowI], scale=FALSE)
-  MetaData$VE_L_Y_Pixel_Centered[RowI]<-scale(MetaData$VE_L_Y_Pixel[RowI], center=MetaData$CC_Y_Pixel[RowI], scale=FALSE)
-  MetaData$LE_L_Y_Pixel_Centered[RowI]<- 0 ## By default we use the lateral edge a Y=0
-  #MetaData$LE_L_Y_Pixel_Centered[RowI]<-scale(MetaData$LE_L_Y_Pixel[RowI], center=MetaData$CC_Y_Pixel[RowI], scale=FALSE)
-  MetaData$DE_L_Y_Pixel_Centered[RowI]<-scale(MetaData$DE_L_Y_Pixel[RowI], center=MetaData$CC_Y_Pixel[RowI], scale=FALSE)
+  RegistrationData$CC_Y_Pixel_Centered[RowI]<-scale(RegistrationData$CC_Y_Pixel[RowI], center=RegistrationData$CC_Y_Pixel[RowI], scale=FALSE)
+  RegistrationData$DE_R_Y_Pixel_Centered[RowI]<-scale(RegistrationData$DE_R_Y_Pixel[RowI], center=RegistrationData$CC_Y_Pixel[RowI], scale=FALSE)
+  RegistrationData$LE_R_Y_Pixel_Centered[RowI]<- 0 ## By default we use the lateral edge a Y=0
+  #RegistrationData$LE_R_Y_Pixel_Centered[RowI]<-scale(RegistrationData$LE_R_Y_Pixel[RowI], center=RegistrationData$CC_Y_Pixel[RowI], scale=FALSE)
+  RegistrationData$VE_R_Y_Pixel_Centered[RowI]<-scale(RegistrationData$VE_R_Y_Pixel[RowI], center=RegistrationData$CC_Y_Pixel[RowI], scale=FALSE)
+  RegistrationData$VE_L_Y_Pixel_Centered[RowI]<-scale(RegistrationData$VE_L_Y_Pixel[RowI], center=RegistrationData$CC_Y_Pixel[RowI], scale=FALSE)
+  RegistrationData$LE_L_Y_Pixel_Centered[RowI]<- 0 ## By default we use the lateral edge a Y=0
+  #RegistrationData$LE_L_Y_Pixel_Centered[RowI]<-scale(RegistrationData$LE_L_Y_Pixel[RowI], center=RegistrationData$CC_Y_Pixel[RowI], scale=FALSE)
+  RegistrationData$DE_L_Y_Pixel_Centered[RowI]<-scale(RegistrationData$DE_L_Y_Pixel[RowI], center=RegistrationData$CC_Y_Pixel[RowI], scale=FALSE)
   
   
   
   # Scale the Registration coordinates
-  MetaData$CC_X_Scaled[RowI]<- scale(MetaData$CC_X_Pixel_Centered[RowI], center=FALSE, scale=MetaData$DE_R_X_Pixel_Centered[RowI])
-  MetaData$DE_R_X_Scaled[RowI]<- scale(MetaData$DE_R_X_Pixel_Centered[RowI], center=FALSE, scale=MetaData$LE_R_X_Pixel_Centered[RowI])
-  MetaData$LE_R_X_Scaled[RowI]<- scale(MetaData$LE_R_X_Pixel_Centered[RowI], center=FALSE, scale=MetaData$LE_R_X_Pixel_Centered[RowI])
-  MetaData$VE_R_X_Scaled[RowI]<- scale(MetaData$VE_R_X_Pixel_Centered[RowI], center=FALSE, scale=MetaData$LE_R_X_Pixel_Centered[RowI])
-  MetaData$VE_L_X_Scaled[RowI]<- - scale(MetaData$VE_L_X_Pixel_Centered[RowI], center=FALSE, scale=MetaData$LE_L_X_Pixel_Centered[RowI])
-  MetaData$LE_L_X_Scaled[RowI]<- - scale(MetaData$LE_L_X_Pixel_Centered[RowI], center=FALSE, scale=MetaData$LE_L_X_Pixel_Centered[RowI])
-  MetaData$DE_L_X_Scaled[RowI]<- - scale(MetaData$DE_L_X_Pixel_Centered[RowI], center=FALSE, scale=MetaData$LE_L_X_Pixel_Centered[RowI])
+  RegistrationData$CC_X_Scaled[RowI]<- scale(RegistrationData$CC_X_Pixel_Centered[RowI], center=FALSE, scale=RegistrationData$DE_R_X_Pixel_Centered[RowI])
+  RegistrationData$DE_R_X_Scaled[RowI]<- scale(RegistrationData$DE_R_X_Pixel_Centered[RowI], center=FALSE, scale=RegistrationData$LE_R_X_Pixel_Centered[RowI])
+  RegistrationData$LE_R_X_Scaled[RowI]<- scale(RegistrationData$LE_R_X_Pixel_Centered[RowI], center=FALSE, scale=RegistrationData$LE_R_X_Pixel_Centered[RowI])
+  RegistrationData$VE_R_X_Scaled[RowI]<- scale(RegistrationData$VE_R_X_Pixel_Centered[RowI], center=FALSE, scale=RegistrationData$LE_R_X_Pixel_Centered[RowI])
+  RegistrationData$VE_L_X_Scaled[RowI]<- - scale(RegistrationData$VE_L_X_Pixel_Centered[RowI], center=FALSE, scale=RegistrationData$LE_L_X_Pixel_Centered[RowI])
+  RegistrationData$LE_L_X_Scaled[RowI]<- - scale(RegistrationData$LE_L_X_Pixel_Centered[RowI], center=FALSE, scale=RegistrationData$LE_L_X_Pixel_Centered[RowI])
+  RegistrationData$DE_L_X_Scaled[RowI]<- - scale(RegistrationData$DE_L_X_Pixel_Centered[RowI], center=FALSE, scale=RegistrationData$LE_L_X_Pixel_Centered[RowI])
   
-  MetaData$CC_Y_Scaled[RowI]<- scale(MetaData$CC_Y_Pixel_Centered[RowI], center=FALSE, scale=MetaData$DE_R_Y_Pixel_Centered[RowI])
-  MetaData$DE_R_Y_Scaled[RowI]<- scale(MetaData$DE_R_Y_Pixel_Centered[RowI], center=FALSE, scale=MetaData$DE_R_Y_Pixel_Centered[RowI])
-  MetaData$LE_R_Y_Scaled[RowI]<- 0 # Force the Lateral point to be in the dorsal quadrant
-  # MetaData$LE_R_Y_Scaled[RowI]<- scale(MetaData$LE_R_Y_Pixel_Centered[RowI], center=FALSE, scale=MetaData$LE_R_Y_Pixel_Centered[RowI])
-  MetaData$VE_R_Y_Scaled[RowI]<- - scale(MetaData$VE_R_Y_Pixel_Centered[RowI], center=FALSE, scale=MetaData$VE_R_Y_Pixel_Centered[RowI])
-  MetaData$VE_L_Y_Scaled[RowI]<- - scale(MetaData$VE_L_Y_Pixel_Centered[RowI], center=FALSE, scale=MetaData$VE_L_Y_Pixel_Centered[RowI])
-  MetaData$LE_L_Y_Scaled[RowI]<- 0 # Force the Lateral point to be in the dorsal quadrant
-  #MetaData$LE_L_Y_Scaled[RowI]<- scale(MetaData$LE_L_Y_Pixel_Centered[RowI], center=FALSE, scale=MetaData$LE_L_Y_Pixel_Centered[RowI])
-  MetaData$DE_L_Y_Scaled[RowI]<- scale(MetaData$DE_L_Y_Pixel_Centered[RowI], center=FALSE, scale=MetaData$DE_L_Y_Pixel_Centered[RowI])
+  RegistrationData$CC_Y_Scaled[RowI]<- scale(RegistrationData$CC_Y_Pixel_Centered[RowI], center=FALSE, scale=RegistrationData$DE_R_Y_Pixel_Centered[RowI])
+  RegistrationData$DE_R_Y_Scaled[RowI]<- scale(RegistrationData$DE_R_Y_Pixel_Centered[RowI], center=FALSE, scale=RegistrationData$DE_R_Y_Pixel_Centered[RowI])
+  RegistrationData$LE_R_Y_Scaled[RowI]<- 0 # Force the Lateral point to be in the dorsal quadrant
+  # RegistrationData$LE_R_Y_Scaled[RowI]<- scale(RegistrationData$LE_R_Y_Pixel_Centered[RowI], center=FALSE, scale=RegistrationData$LE_R_Y_Pixel_Centered[RowI])
+  RegistrationData$VE_R_Y_Scaled[RowI]<- - scale(RegistrationData$VE_R_Y_Pixel_Centered[RowI], center=FALSE, scale=RegistrationData$VE_R_Y_Pixel_Centered[RowI])
+  RegistrationData$VE_L_Y_Scaled[RowI]<- - scale(RegistrationData$VE_L_Y_Pixel_Centered[RowI], center=FALSE, scale=RegistrationData$VE_L_Y_Pixel_Centered[RowI])
+  RegistrationData$LE_L_Y_Scaled[RowI]<- 0 # Force the Lateral point to be in the dorsal quadrant
+  #RegistrationData$LE_L_Y_Scaled[RowI]<- scale(RegistrationData$LE_L_Y_Pixel_Centered[RowI], center=FALSE, scale=RegistrationData$LE_L_Y_Pixel_Centered[RowI])
+  RegistrationData$DE_L_Y_Scaled[RowI]<- scale(RegistrationData$DE_L_Y_Pixel_Centered[RowI], center=FALSE, scale=RegistrationData$DE_L_Y_Pixel_Centered[RowI])
   
   # Extract the Variables from the File name convention
-  List_Filename_Variables<- unlist(strsplit(as.character(MetaData$File_ID[RowI]),"_", fixed = TRUE))
-  MetaData$Date[RowI]<-List_Filename_Variables[1]
-  MetaData$Subject_ID[RowI]<-List_Filename_Variables[2]
-  MetaData$Group[RowI]<-List_Filename_Variables[3]
+  List_Filename_Variables<- unlist(strsplit(as.character(RegistrationData$File_ID[RowI]),"_", fixed = TRUE))
+  RegistrationData$Date[RowI]<-List_Filename_Variables[1]
+  RegistrationData$Subject_ID[RowI]<-List_Filename_Variables[2]
+  RegistrationData$Group[RowI]<-List_Filename_Variables[3]
   
   if (length(List_Filename_Variables)>3){
     for (VariableI in 4:length(List_Filename_Variables)){
-      MetaData[[paste0("Filename_Variable_", sprintf("%03d", as.numeric(VariableI)))]][RowI]  <- as.character(List_Filename_Variables[VariableI])
-    }# Add the Variable from the filename to the Metadata table
+      RegistrationData[[paste0("Filename_Variable_", sprintf("%03d", as.numeric(VariableI)))]][RowI]  <- as.character(List_Filename_Variables[VariableI])
+    }# Add the Variable from the filename to the RegistrationData table
   }  # If 
 } ## End of for each Row and center and scale the data
 
-write.table(MetaData, file=file.path(OutputDirPath, "MetaData_Coordinates_Processed.csv"), row.names=FALSE, sep = ",")
+write.table(RegistrationData, file=file.path(OutputDirPath, "RegistrationData_Coordinates_Processed.csv"), row.names=FALSE, sep = ",")
 
 
-# Process Data File -------------------------------------------------------
+
+
+
+
+# Pre-Process the Data ----------------------------------------------------
+
 # Transform File_ID into factor
 MergedInputData$File_ID<-as.factor(MergedInputData$File_ID)
 
-## Make sure Slice Label and Channel are present
+## Make sure Slice, Label and Channel are present
 if(( any(colnames(MergedInputData)=="Slice")==FALSE ) && ( any(colnames(MergedInputData)=="Label")==FALSE )    && ( any(colnames(MergedInputData)=="Channel")==FALSE )){
   MergedInputData$Slice<-rep(1,dim(MergedInputData)[1])
   MergedInputData$Channel<-MergedInputData$Slice
   MergedInputData$Label<-MergedInputData$File_ID
-
+  
 } else if ( (any(colnames(MergedInputData)=="Slice")==FALSE)            && (any(colnames(MergedInputData)=="Label")==FALSE)  && (any(colnames(MergedInputData)=="Channel")==TRUE)){
   MergedInputData$Slice<-as.factor(MergedInputData$Channel)
   MergedInputData$Label<-MergedInputData$File_ID
   
 }else if ((any(colnames(MergedInputData)=="Slice")==FALSE)&& (any(colnames(MergedInputData)=="Label")==TRUE)&& (any(colnames(MergedInputData)=="Channel")==FALSE)){
-  MergedInputData$Channel<-as.character(InputDataI$Label) ## Duplicate the label as a Channel
+  MergedInputData$Channel<-as.character(MergedInputData$Label) ## Duplicate the label as a Channel
   #Create the Channel by removing the File_ID from the Label and then removing the .tif: extension if any so the channel will be 1 2 3 etc...
   for(RowI in 1:length(MergedInputData$Label)){
     MergedInputData$Channel[RowI]<- gsub(as.character(MergedInputData$File_ID[RowI]), "", as.character(MergedInputData$Label[RowI]))
@@ -293,34 +300,50 @@ if(( any(colnames(MergedInputData)=="Slice")==FALSE ) && ( any(colnames(MergedIn
   
 }else if ((any(colnames(MergedInputData)=="Slice")==FALSE) && (any(colnames(MergedInputData)=="Label")==TRUE)&& (any(colnames(MergedInputData)=="Channel")==TRUE)){
   MergedInputDataSlice<-as.factor(MergedInputData$Channel)
-  }else if ((any(colnames(MergedInputData)=="Slice")==TRUE)&& (any(colnames(MergedInputData)=="Label")==FALSE)&& (any(colnames(MergedInputData)=="Channel")==TRUE)){
-    MergedInputData$Label<-MergedInputData$File_ID
-    
- }else if ((any(colnames(MergedInputData)=="Slice")==TRUE)&& (any(colnames(MergedInputData)=="Label")==TRUE) && (any(colnames(MergedInputData)=="Channel")==FALSE)){
-   MergedInputData$Channel<-as.character(InputDataI$Label) ## Duplicate the label as a Channel
-   #Create the Channel by removing the File_ID from the Label and then removing the .tif: extension if any so the channel will be 1 2 3 etc...
-   for(RowI in 1:length(MergedInputData$Label)){
-     MergedInputData$Channel[RowI]<- gsub(as.character(MergedInputData$File_ID[RowI]), "", as.character(MergedInputData$Label[RowI]))
-     MergedInputData$Channel[RowI]<- gsub(".tif:", "", as.character(MergedInputData$Channel[RowI]))
-   }
- }
+}else if ((any(colnames(MergedInputData)=="Slice")==TRUE)&& (any(colnames(MergedInputData)=="Label")==FALSE)&& (any(colnames(MergedInputData)=="Channel")==TRUE)){
+  MergedInputData$Label<-MergedInputData$File_ID
+  
+}else if ((any(colnames(MergedInputData)=="Slice")==TRUE)&& (any(colnames(MergedInputData)=="Label")==TRUE) && (any(colnames(MergedInputData)=="Channel")==FALSE)){
+  MergedInputData$Channel<-as.character(InputDataI$Label) ## Duplicate the label as a Channel
+  #Create the Channel by removing the File_ID from the Label and then removing the .tif: extension if any so the channel will be 1 2 3 etc...
+  for(RowI in 1:length(MergedInputData$Label)){
+    MergedInputData$Channel[RowI]<- gsub(as.character(MergedInputData$File_ID[RowI]), "", as.character(MergedInputData$Label[RowI]))
+    MergedInputData$Channel[RowI]<- gsub(".tif:", "", as.character(MergedInputData$Channel[RowI]))
+  }
+}
+
+## Make sure MarkerType and Counter are present
+
+if(( any(colnames(MergedInputData)=="Type")==FALSE ) && ( any(colnames(MergedInputData)=="Counter")==FALSE ) ){
+  MergedInputData$Type<-as.factor(rep(paste0("Type_",1),dim(MergedInputData)[1]))
+  MergedInputData$Counter<-as.factor(rep(paste0("Counter_",1),dim(MergedInputData)[1]))
+} else if(( any(colnames(MergedInputData)=="Type")==TRUE ) && ( any(colnames(MergedInputData)=="Counter")==FALSE ) ){
+  MergedInputData$Type<-as.factor(MergedInputData$Type)
+  MergedInputData$Counter<-MergedInputData$Type
+} else if(( any(colnames(MergedInputData)=="Type")==FALSE ) && ( any(colnames(MergedInputData)=="Counter")==TRUE ) ){
+  MergedInputData$Counter<-as.factor(MergedInputData$Counter)
+   MergedInputData$Type<-MergedInputData$Counter
+}
 
 
-# Process each level of File_ID aka process each File separately
+
+
+# Process each level of File_ID aka process each File separatelye -------------------------------------------------------
+
 for (FileI in 1:nlevels(MergedInputData$File_ID)){
   File_IDI<-levels(MergedInputData$File_ID)[FileI]
   
   InputDataI<-MergedInputData[MergedInputData$File_ID==File_IDI,] # Get the Data of a given Image
   
   
-  ## Get the registered coordinates from the MetaData
+  ## Get the registered coordinates from the RegistrationData
   ## If a perfect match on fileIDs
-  #MetaDataI<-MetaData[MetaData$File_ID==File_IDI,]
+  #RegistrationDataI<-RegistrationData[RegistrationData$File_ID==File_IDI,]
   ## If a partial match on fileIDs
-  MetaDataI<-subset(MetaData, pmatch(MetaData$File_ID, File_IDI)==1)
+  RegistrationDataI<-subset(RegistrationData, pmatch(RegistrationData$File_ID, File_IDI)==1)
   
-  if(MetaDataI$Resolution_Unit!="pixels") {
-    ImageResolutionI<-as.numeric(MetaDataI$Resolution_Pixels_per_Unit)
+  if(RegistrationDataI$Resolution_Unit!="pixels") {
+    ImageResolutionI<-as.numeric(RegistrationDataI$Resolution_Pixels_per_Unit)
     InputDataI$X_Pixel<- InputDataI$X * ImageResolutionI
     InputDataI$Y_Pixel<- InputDataI$Y * ImageResolutionI
   } else { ## Else data is already in pixels
@@ -329,8 +352,8 @@ for (FileI in 1:nlevels(MergedInputData$File_ID)){
   }
   
   # Center the data on the central canal
-  InputDataI$X_Pixel_Centered<-scale(InputDataI$X_Pixel, center=MetaDataI$CC_X_Pixel, scale=FALSE)
-  InputDataI$Y_Pixel_Centered<-scale(InputDataI$Y_Pixel, center=MetaDataI$CC_Y_Pixel, scale=FALSE)
+  InputDataI$X_Pixel_Centered<-scale(InputDataI$X_Pixel, center=RegistrationDataI$CC_X_Pixel, scale=FALSE)
+  InputDataI$Y_Pixel_Centered<-scale(InputDataI$Y_Pixel, center=RegistrationDataI$CC_Y_Pixel, scale=FALSE)
   
   # Invert the Y because ImageJ gives inverted coordinates
   ##InputDataI$Y_Pixel_Centered <- -InputDataI$Y_Pixel_Centered
@@ -343,28 +366,28 @@ for (FileI in 1:nlevels(MergedInputData$File_ID)){
   
   
   # Scale each quadrant
-  InputDataI_D_R$X_Scaled<- scale(InputDataI_D_R$X_Pixel_Centered, center=FALSE, scale=MetaDataI$LE_R_X_Pixel_Centered)
-  InputDataI_D_R$Y_Scaled<- scale(InputDataI_D_R$Y_Pixel_Centered, center=FALSE, scale=MetaDataI$DE_R_Y_Pixel_Centered)
+  InputDataI_D_R$X_Scaled<- scale(InputDataI_D_R$X_Pixel_Centered, center=FALSE, scale=RegistrationDataI$LE_R_X_Pixel_Centered)
+  InputDataI_D_R$Y_Scaled<- scale(InputDataI_D_R$Y_Pixel_Centered, center=FALSE, scale=RegistrationDataI$DE_R_Y_Pixel_Centered)
   
-  InputDataI_V_R$X_Scaled<- scale(InputDataI_V_R$X_Pixel_Centered, center=FALSE, scale=MetaDataI$LE_R_X_Pixel_Centered)
-  InputDataI_V_R$Y_Scaled<- - scale(InputDataI_V_R$Y_Pixel_Centered, center=FALSE, scale=MetaDataI$VE_R_Y_Pixel_Centered)
+  InputDataI_V_R$X_Scaled<- scale(InputDataI_V_R$X_Pixel_Centered, center=FALSE, scale=RegistrationDataI$LE_R_X_Pixel_Centered)
+  InputDataI_V_R$Y_Scaled<- - scale(InputDataI_V_R$Y_Pixel_Centered, center=FALSE, scale=RegistrationDataI$VE_R_Y_Pixel_Centered)
   
-  InputDataI_V_L$X_Scaled<- - scale(InputDataI_V_L$X_Pixel_Centered, center=FALSE, scale=MetaDataI$LE_L_X_Pixel_Centered)
-  InputDataI_V_L$Y_Scaled<- - scale(InputDataI_V_L$Y_Pixel_Centered, center=FALSE, scale=MetaDataI$VE_L_Y_Pixel_Centered)
+  InputDataI_V_L$X_Scaled<- - scale(InputDataI_V_L$X_Pixel_Centered, center=FALSE, scale=RegistrationDataI$LE_L_X_Pixel_Centered)
+  InputDataI_V_L$Y_Scaled<- - scale(InputDataI_V_L$Y_Pixel_Centered, center=FALSE, scale=RegistrationDataI$VE_L_Y_Pixel_Centered)
   
-  InputDataI_D_L$X_Scaled<-  - scale(InputDataI_D_L$X_Pixel_Centered, center=FALSE, scale=MetaDataI$LE_L_X_Pixel_Centered)
-  InputDataI_D_L$Y_Scaled<- scale(InputDataI_D_L$Y_Pixel_Centered, center=FALSE, scale=MetaDataI$DE_R_Y_Pixel_Centered)
+  InputDataI_D_L$X_Scaled<-  - scale(InputDataI_D_L$X_Pixel_Centered, center=FALSE, scale=RegistrationDataI$LE_L_X_Pixel_Centered)
+  InputDataI_D_L$Y_Scaled<- scale(InputDataI_D_L$Y_Pixel_Centered, center=FALSE, scale=RegistrationDataI$DE_R_Y_Pixel_Centered)
   
   
   # Bind the quadrants back together
   OutputDataI<-rbind(InputDataI_D_R,InputDataI_V_R,InputDataI_V_L,InputDataI_D_L)
   
-  ## Add the MetaData to the OutputData
-  MissingVars<- setdiff(colnames(MetaDataI), colnames(OutputDataI)) # Get the Missing Columns
+  ## Add the RegistrationData to the OutputData
+  MissingVars<- setdiff(colnames(RegistrationDataI), colnames(OutputDataI)) # Get the Missing Columns
  
   if (length(MissingVars)>0){ # Compare the Nb Of Columns if Merge file has more columns
     for (MissingVariableI in 1: length(MissingVars)){
-      OutputDataI[[paste0(MissingVars[MissingVariableI])]] <- rep(MetaDataI[[paste0(MissingVars[MissingVariableI])]], dim(OutputDataI)[1])
+      OutputDataI[[paste0(MissingVars[MissingVariableI])]] <- rep(RegistrationDataI[[paste0(MissingVars[MissingVariableI])]], dim(OutputDataI)[1])
     } # Add Missing Variables to OutputDataI
   }
   
@@ -401,7 +424,7 @@ for (FileI in 1:nlevels(OutputData$File_ID)){
      xaxp=c(-Xlim,Xlim,4),
       ylim=c(-Ylim,Ylim),
       xlim=c(-Xlim,Xlim),
-       type="p", col=OutputDataI$Type,
+       type="p", col=OutputDataI$Counter,
        main=File_IDI, ylab="Relative position to CC (pixel)", xlab="Relative position to CC (pixel)", lwd=1)
   legend("bottomleft", title="Marker Type",legend=unique(OutputDataI$Type), bty="n", col=1:length(OutputDataI$Type),pch=16)
   points(mean(OutputDataI$CC_X_Pixel_Centered),mean(OutputDataI$CC_Y_Pixel_Centered), col="black", pch=3)
@@ -572,7 +595,7 @@ for (FileI in 1:nlevels(OutputData$Subject_ID)){
 # # Subset the data into control and test
 # ControlData<-OutputData[OutputData$Group=="Control",]
 # write.table(ControlData, file=file.path(OutputDirPath, "Tables","Control Data.csv"), row.names=FALSE, sep = ",")
-# MetaDataControl<-MetaData[MetaData$Group=="Control",]
+# RegistrationDataControl<-RegistrationData[RegistrationData$Group=="Control",]
 # SummaryTableControl<-as.data.frame(table(ControlData$X_Scaled))
 # SummaryTableControl$Var1<- as.numeric(as.character(SummaryTableControl$Var1))
 # SummaryControlLeft<-SummaryTableControl[SummaryTableControl$Var1<0,]
@@ -585,7 +608,7 @@ for (FileI in 1:nlevels(OutputData$Subject_ID)){
 # 
 # TestData<-OutputData[OutputData$Group=="Test",]
 # write.table(TestData, file=file.path(OutputDirPath, "Tables","Test Data.csv"), row.names=FALSE, sep = ",")
-# MetaDataTest<-MetaData[MetaData$Group=="Test",]
+# RegistrationDataTest<-RegistrationData[RegistrationData$Group=="Test",]
 # 
 # SummaryTableTest<-as.data.frame(table(TestData$X_Scaled))
 # SummaryTableTest$Var1<- as.numeric(as.character(SummaryTableTest$Var1))
@@ -620,13 +643,13 @@ for (FileI in 1:nlevels(OutputData$Subject_ID)){
 #        cex=0.75,
 #        y.intersp=1.4) # Add legend
 # 
-# points(MetaDataControl$CC_X_Pixel_Centered,MetaDataControl$CC_Y_Pixel_Centered, col="black", pch=3, cex=0.5)
-# points(MetaDataControl$DE_R_X_Pixel_Centered,MetaDataControl$DE_R_Y_Pixel_Centered, col="black", pch=3, cex=0.5)
-# points(MetaDataControl$LE_R_X_Pixel_Centered,MetaDataControl$LE_R_Y_Pixel_Centered, col="black", pch=3, cex=0.5)
-# points(MetaDataControl$VE_R_X_Pixel_Centered,MetaDataControl$VE_R_Y_Pixel_Centered, col="black", pch=3, cex=0.5)
-# points(MetaDataControl$DE_L_X_Pixel_Centered,MetaDataControl$DE_L_Y_Pixel_Centered, col="black", pch=3, cex=0.5)
-# points(MetaDataControl$LE_L_X_Pixel_Centered,MetaDataControl$LE_L_Y_Pixel_Centered, col="black", pch=3, cex=0.5)
-# points(MetaDataControl$VE_L_X_Pixel_Centered,MetaDataControl$VE_L_Y_Pixel_Centered, col="black", pch=3, cex=0.5)
+# points(RegistrationDataControl$CC_X_Pixel_Centered,RegistrationDataControl$CC_Y_Pixel_Centered, col="black", pch=3, cex=0.5)
+# points(RegistrationDataControl$DE_R_X_Pixel_Centered,RegistrationDataControl$DE_R_Y_Pixel_Centered, col="black", pch=3, cex=0.5)
+# points(RegistrationDataControl$LE_R_X_Pixel_Centered,RegistrationDataControl$LE_R_Y_Pixel_Centered, col="black", pch=3, cex=0.5)
+# points(RegistrationDataControl$VE_R_X_Pixel_Centered,RegistrationDataControl$VE_R_Y_Pixel_Centered, col="black", pch=3, cex=0.5)
+# points(RegistrationDataControl$DE_L_X_Pixel_Centered,RegistrationDataControl$DE_L_Y_Pixel_Centered, col="black", pch=3, cex=0.5)
+# points(RegistrationDataControl$LE_L_X_Pixel_Centered,RegistrationDataControl$LE_L_Y_Pixel_Centered, col="black", pch=3, cex=0.5)
+# points(RegistrationDataControl$VE_L_X_Pixel_Centered,RegistrationDataControl$VE_L_Y_Pixel_Centered, col="black", pch=3, cex=0.5)
 # 
 # dev.off() # Close and save the graph
 # 
@@ -663,13 +686,13 @@ for (FileI in 1:nlevels(OutputData$Subject_ID)){
 #        bty="n",
 #        cex=0.75,
 #        y.intersp=1.4) # Add legend
-# points(MetaDataControl$CC_X_Scaled,MetaDataControl$CC_Y_Scaled, col="black", pch=3, cex=0.5)
-# points(MetaDataControl$DE_R_X_Scaled,MetaDataControl$DE_R_Y_Scaled, col="black", pch=3, cex=0.5)
-# points(MetaDataControl$LE_R_X_Scaled,MetaDataControl$LE_R_Y_Scaled, col="black", pch=3, cex=0.5)
-# points(MetaDataControl$VE_R_X_Scaled,MetaDataControl$VE_R_Y_Scaled, col="black", pch=3, cex=0.5)
-# points(MetaDataControl$DE_L_X_Scaled,MetaDataControl$DE_L_Y_Scaled, col="black", pch=3, cex=0.5)
-# points(MetaDataControl$LE_L_X_Scaled,MetaDataControl$LE_L_Y_Scaled, col="black", pch=3, cex=0.5)
-# points(MetaDataControl$VE_L_X_Scaled,MetaDataControl$VE_L_Y_Scaled, col="black", pch=3, cex=0.5)
+# points(RegistrationDataControl$CC_X_Scaled,RegistrationDataControl$CC_Y_Scaled, col="black", pch=3, cex=0.5)
+# points(RegistrationDataControl$DE_R_X_Scaled,RegistrationDataControl$DE_R_Y_Scaled, col="black", pch=3, cex=0.5)
+# points(RegistrationDataControl$LE_R_X_Scaled,RegistrationDataControl$LE_R_Y_Scaled, col="black", pch=3, cex=0.5)
+# points(RegistrationDataControl$VE_R_X_Scaled,RegistrationDataControl$VE_R_Y_Scaled, col="black", pch=3, cex=0.5)
+# points(RegistrationDataControl$DE_L_X_Scaled,RegistrationDataControl$DE_L_Y_Scaled, col="black", pch=3, cex=0.5)
+# points(RegistrationDataControl$LE_L_X_Scaled,RegistrationDataControl$LE_L_Y_Scaled, col="black", pch=3, cex=0.5)
+# points(RegistrationDataControl$VE_L_X_Scaled,RegistrationDataControl$VE_L_Y_Scaled, col="black", pch=3, cex=0.5)
 # points(mean(ControlData$X_Scaled[ControlData$X_Scaled<0]),mean(ControlData$Y_Scaled[ControlData$X_Scaled<0]) , col="deepskyblue4", pch=3, cex=1, lwd=2)
 # points(mean(ControlData$X_Scaled[ControlData$X_Scaled>0]),mean(ControlData$Y_Scaled[ControlData$X_Scaled>=0]) , col="deepskyblue4", pch=3, cex=1, lwd=2)
 # 
@@ -708,13 +731,13 @@ for (FileI in 1:nlevels(OutputData$Subject_ID)){
 #        y.intersp=1.4) # Add legend
 # 
 # 
-# points(MetaDataTest$CC_X_Pixel_Centered,MetaDataTest$CC_Y_Pixel_Centered, col="black", pch=3, cex=0.5)
-# points(MetaDataTest$DE_R_X_Pixel_Centered,MetaDataTest$DE_R_Y_Pixel_Centered, col="black", pch=3, cex=0.5)
-# points(MetaDataTest$LE_R_X_Pixel_Centered,MetaDataTest$LE_R_Y_Pixel_Centered, col="black", pch=3, cex=0.5)
-# points(MetaDataTest$VE_R_X_Pixel_Centered,MetaDataTest$VE_R_Y_Pixel_Centered, col="black", pch=3, cex=0.5)
-# points(MetaDataTest$DE_L_X_Pixel_Centered,MetaDataTest$DE_L_Y_Pixel_Centered, col="black", pch=3, cex=0.5)
-# points(MetaDataTest$LE_L_X_Pixel_Centered,MetaDataTest$LE_L_Y_Pixel_Centered, col="black", pch=3, cex=0.5)
-# points(MetaDataTest$VE_L_X_Pixel_Centered,MetaDataTest$VE_L_Y_Pixel_Centered, col="black", pch=3, cex=0.5)
+# points(RegistrationDataTest$CC_X_Pixel_Centered,RegistrationDataTest$CC_Y_Pixel_Centered, col="black", pch=3, cex=0.5)
+# points(RegistrationDataTest$DE_R_X_Pixel_Centered,RegistrationDataTest$DE_R_Y_Pixel_Centered, col="black", pch=3, cex=0.5)
+# points(RegistrationDataTest$LE_R_X_Pixel_Centered,RegistrationDataTest$LE_R_Y_Pixel_Centered, col="black", pch=3, cex=0.5)
+# points(RegistrationDataTest$VE_R_X_Pixel_Centered,RegistrationDataTest$VE_R_Y_Pixel_Centered, col="black", pch=3, cex=0.5)
+# points(RegistrationDataTest$DE_L_X_Pixel_Centered,RegistrationDataTest$DE_L_Y_Pixel_Centered, col="black", pch=3, cex=0.5)
+# points(RegistrationDataTest$LE_L_X_Pixel_Centered,RegistrationDataTest$LE_L_Y_Pixel_Centered, col="black", pch=3, cex=0.5)
+# points(RegistrationDataTest$VE_L_X_Pixel_Centered,RegistrationDataTest$VE_L_Y_Pixel_Centered, col="black", pch=3, cex=0.5)
 # 
 # 
 # 
@@ -750,13 +773,13 @@ for (FileI in 1:nlevels(OutputData$Subject_ID)){
 #        bty="n",
 #        cex=0.75,
 #        y.intersp=1.4) # Add legend
-# points(MetaDataTest$CC_X_Scaled,MetaDataTest$CC_Y_Scaled, col="black", pch=3, cex=0.5)
-# points(MetaDataTest$DE_R_X_Scaled,MetaDataTest$DE_R_Y_Scaled, col="black", pch=3, cex=0.5)
-# points(MetaDataTest$LE_R_X_Scaled,MetaDataTest$LE_R_Y_Scaled, col="black", pch=3, cex=0.5)
-# points(MetaDataTest$VE_R_X_Scaled,MetaDataTest$VE_R_Y_Scaled, col="black", pch=3, cex=0.5)
-# points(MetaDataTest$DE_L_X_Scaled,MetaDataTest$DE_L_Y_Scaled, col="black", pch=3, cex=0.5)
-# points(MetaDataTest$LE_L_X_Scaled,MetaDataTest$LE_L_Y_Scaled, col="black", pch=3, cex=0.5)
-# points(MetaDataTest$VE_L_X_Scaled,MetaDataTest$VE_L_Y_Scaled, col="black", pch=3, cex=0.5)
+# points(RegistrationDataTest$CC_X_Scaled,RegistrationDataTest$CC_Y_Scaled, col="black", pch=3, cex=0.5)
+# points(RegistrationDataTest$DE_R_X_Scaled,RegistrationDataTest$DE_R_Y_Scaled, col="black", pch=3, cex=0.5)
+# points(RegistrationDataTest$LE_R_X_Scaled,RegistrationDataTest$LE_R_Y_Scaled, col="black", pch=3, cex=0.5)
+# points(RegistrationDataTest$VE_R_X_Scaled,RegistrationDataTest$VE_R_Y_Scaled, col="black", pch=3, cex=0.5)
+# points(RegistrationDataTest$DE_L_X_Scaled,RegistrationDataTest$DE_L_Y_Scaled, col="black", pch=3, cex=0.5)
+# points(RegistrationDataTest$LE_L_X_Scaled,RegistrationDataTest$LE_L_Y_Scaled, col="black", pch=3, cex=0.5)
+# points(RegistrationDataTest$VE_L_X_Scaled,RegistrationDataTest$VE_L_Y_Scaled, col="black", pch=3, cex=0.5)
 # points(mean(TestData$X_Scaled[TestData$X_Scaled<0]),mean(TestData$Y_Scaled[TestData$X_Scaled<0]) , col="red4", pch=3, cex=1, lwd=2)
 # points(mean(TestData$X_Scaled[TestData$X_Scaled>0]),mean(TestData$Y_Scaled[TestData$X_Scaled>=0]) , col="red4", pch=3, cex=1, lwd=2)
 # 
