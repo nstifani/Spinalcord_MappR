@@ -100,7 +100,7 @@ MergeCSVFileList.Function <- function(ListCSVFilePath, MergedObjectName){
 # Function to Select a given CSV File
 SelectCSVFile.Function <- function(DialogMessage, DataObjectName){
   DataFilePath<-tk_choose.files(default = getwd(), caption = DialogMessage, filters=matrix(c("CSV File",".csv"),1,2, byrow=TRUE), multi=FALSE)
-  Data<-read.table(DataFilePath, header=TRUE, sep=",")
+  Data<-read.table(DataFilePath, header=TRUE, sep=",", colClasses = "character")
   assign(DataObjectName, Data, envir=.GlobalEnv)
 }
 
@@ -136,7 +136,7 @@ SelectCSVDir.Function(DialogMessage = "Choose the folder containing the CSV Data
                       ListFilePathObjectName="ListInputFilePath",
                       ParentDirPathObjectName="ParentInputDirPath"
 )
-
+setwd(ParentInputDirPath)
 # Merge all Input CSV Files into one
 MergeCSVFileList.Function(ListCSVFilePath=ListInputFilePath, MergedObjectName="MergedInputData")
 
@@ -154,9 +154,7 @@ CreateOutputDir.Function(OutputDirLocation=ParentInputDirPath,
 
 
 
-# Process RegistrationData  ---------------------------------------------------
-# Get the Resolution Unit as character
-RegistrationData$Resolution_Unit<-as.character(RegistrationData$Resolution_Unit)
+# Pre-Process RegistrationData  ---------------------------------------------------
 
 # Center the RegistrationData for each Row according to the CC position
 # If coordinates are already in pixel just copy them
@@ -164,50 +162,50 @@ RegistrationData$Resolution_Unit<-as.character(RegistrationData$Resolution_Unit)
 
 for(RowI in 1:dim(RegistrationData)[1]){
   if(RegistrationData$Resolution_Unit[RowI]=="pixels") {  
-    RegistrationData$CC_X_Pixel[RowI]<- RegistrationData$CC_X[RowI]
-    RegistrationData$CC_Y_Pixel[RowI]<- RegistrationData$CC_Y[RowI]
+    RegistrationData$CC_X_Pixel[RowI]<- as.numeric(RegistrationData$CC_X[RowI])
+    RegistrationData$CC_Y_Pixel[RowI]<- as.numeric(RegistrationData$CC_Y[RowI])
     
-    RegistrationData$DE_R_X_Pixel[RowI]<- RegistrationData$DE_R_X[RowI]
-    RegistrationData$DE_R_Y_Pixel[RowI]<- RegistrationData$DE_R_Y[RowI]
+    RegistrationData$DE_R_X_Pixel[RowI]<- as.numeric(RegistrationData$DE_R_X[RowI])
+    RegistrationData$DE_R_Y_Pixel[RowI]<- as.numeric(RegistrationData$DE_R_Y[RowI])
     
-    RegistrationData$LE_R_X_Pixel[RowI]<- RegistrationData$LE_R_X[RowI]
-    RegistrationData$LE_R_Y_Pixel[RowI]<- RegistrationData$LE_R_Y[RowI]
+    RegistrationData$LE_R_X_Pixel[RowI]<- as.numeric(RegistrationData$LE_R_X[RowI])
+    RegistrationData$LE_R_Y_Pixel[RowI]<- as.numeric(RegistrationData$LE_R_Y[RowI])
     
-    RegistrationData$VE_R_X_Pixel[RowI]<- RegistrationData$VE_R_X[RowI]
-    RegistrationData$VE_R_Y_Pixel[RowI]<- RegistrationData$VE_R_Y[RowI]
+    RegistrationData$VE_R_X_Pixel[RowI]<- as.numeric(RegistrationData$VE_R_X[RowI])
+    RegistrationData$VE_R_Y_Pixel[RowI]<- as.numeric(RegistrationData$VE_R_Y[RowI])
     
-    RegistrationData$VE_L_X_Pixel[RowI]<- RegistrationData$VE_L_X[RowI]
-    RegistrationData$VE_L_Y_Pixel[RowI]<- RegistrationData$VE_L_Y[RowI]
+    RegistrationData$VE_L_X_Pixel[RowI]<- as.numeric(RegistrationData$VE_L_X[RowI])
+    RegistrationData$VE_L_Y_Pixel[RowI]<- as.numeric(RegistrationData$VE_L_Y[RowI])
     
-    RegistrationData$LE_L_X_Pixel[RowI]<- RegistrationData$LE_L_X[RowI]
-    RegistrationData$LE_L_Y_Pixel[RowI]<- RegistrationData$LE_L_Y[RowI]
+    RegistrationData$LE_L_X_Pixel[RowI]<- as.numeric(RegistrationData$LE_L_X[RowI])
+    RegistrationData$LE_L_Y_Pixel[RowI]<- as.numeric(RegistrationData$LE_L_Y[RowI])
     
-    RegistrationData$DE_L_X_Pixel[RowI]<- RegistrationData$DE_L_X[RowI]
-    RegistrationData$DE_L_Y_Pixel[RowI]<- RegistrationData$DE_L_Y[RowI]
+    RegistrationData$DE_L_X_Pixel[RowI]<- as.numeric(RegistrationData$DE_L_X[RowI])
+    RegistrationData$DE_L_Y_Pixel[RowI]<- as.numeric(RegistrationData$DE_L_Y[RowI])
     
   } else if(RegistrationData$Resolution_Unit[RowI]!="pixels") { ## If coordinates are NOT in pixel
     ImageResolution<-as.numeric(RegistrationData$Resolution_Pixels_per_Unit[RowI])
     # If Resolution_Unit is not pixels then we need to convert coordinates in pixels
-    RegistrationData$CC_X_Pixel[RowI]<-RegistrationData$CC_X[RowI]*ImageResolution
-    RegistrationData$CC_Y_Pixel[RowI]<-RegistrationData$CC_Y[RowI]*ImageResolution
+    RegistrationData$CC_X_Pixel[RowI]<-as.numeric(RegistrationData$CC_X[RowI])*ImageResolution
+    RegistrationData$CC_Y_Pixel[RowI]<-as.numeric(RegistrationData$CC_Y[RowI])*ImageResolution
     
-    RegistrationData$DE_R_X_Pixel[RowI]<-RegistrationData$DE_R_X[RowI]*ImageResolution
-    RegistrationData$DE_R_Y_Pixel[RowI]<-RegistrationData$DE_R_Y[RowI]*ImageResolution
+    RegistrationData$DE_R_X_Pixel[RowI]<-as.numeric(RegistrationData$DE_R_X[RowI])*ImageResolution
+    RegistrationData$DE_R_Y_Pixel[RowI]<-as.numeric(RegistrationData$DE_R_Y[RowI])*ImageResolution
     
-    RegistrationData$LE_R_X_Pixel[RowI]<-RegistrationData$LE_R_X[RowI]*ImageResolution
-    RegistrationData$LE_R_Y_Pixel[RowI]<-RegistrationData$LE_R_Y[RowI]*ImageResolution
+    RegistrationData$LE_R_X_Pixel[RowI]<-as.numeric(RegistrationData$LE_R_X[RowI])*ImageResolution
+    RegistrationData$LE_R_Y_Pixel[RowI]<-as.numeric(RegistrationData$LE_R_Y[RowI])*ImageResolution
     
-    RegistrationData$VE_R_X_Pixel[RowI]<-RegistrationData$VE_R_X[RowI]*ImageResolution
-    RegistrationData$VE_R_Y_Pixel[RowI]<-RegistrationData$VE_R_Y[RowI]*ImageResolution
+    RegistrationData$VE_R_X_Pixel[RowI]<-as.numeric(RegistrationData$VE_R_X[RowI])*ImageResolution
+    RegistrationData$VE_R_Y_Pixel[RowI]<-as.numeric(RegistrationData$VE_R_Y[RowI])*ImageResolution
     
-    RegistrationData$VE_L_X_Pixel[RowI]<-RegistrationData$VE_L_X[RowI]*ImageResolution
-    RegistrationData$VE_L_Y_Pixel[RowI]<-RegistrationData$VE_L_Y[RowI]*ImageResolution
+    RegistrationData$VE_L_X_Pixel[RowI]<-as.numeric(RegistrationData$VE_L_X[RowI])*ImageResolution
+    RegistrationData$VE_L_Y_Pixel[RowI]<-as.numeric(RegistrationData$VE_L_Y[RowI])*ImageResolution
     
-    RegistrationData$LE_L_X_Pixel[RowI]<-RegistrationData$LE_L_X[RowI]*ImageResolution
-    RegistrationData$LE_L_Y_Pixel[RowI]<-RegistrationData$LE_L_Y[RowI]*ImageResolution
+    RegistrationData$LE_L_X_Pixel[RowI]<-as.numeric(RegistrationData$LE_L_X[RowI])*ImageResolution
+    RegistrationData$LE_L_Y_Pixel[RowI]<-as.numeric(RegistrationData$LE_L_Y[RowI])*ImageResolution
     
-    RegistrationData$DE_L_X_Pixel[RowI]<-RegistrationData$DE_L_X[RowI]*ImageResolution
-    RegistrationData$DE_L_Y_Pixel[RowI]<-RegistrationData$DE_L_Y[RowI]*ImageResolution
+    RegistrationData$DE_L_X_Pixel[RowI]<-as.numeric(RegistrationData$DE_L_X[RowI])*ImageResolution
+    RegistrationData$DE_L_Y_Pixel[RowI]<-as.numeric(RegistrationData$DE_L_Y[RowI])*ImageResolution
   } ## End of create Pixel Coordinates
   
   # Center the registration coordinates according to the CC position
@@ -251,7 +249,7 @@ for(RowI in 1:dim(RegistrationData)[1]){
   RegistrationData$DE_L_Y_Scaled[RowI]<- scale(RegistrationData$DE_L_Y_Pixel_Centered[RowI], center=FALSE, scale=RegistrationData$DE_L_Y_Pixel_Centered[RowI])
   
   # Extract the Variables from the File name convention
-  List_Filename_Variables<- unlist(strsplit(as.character(RegistrationData$File_ID[RowI]),"_", fixed = TRUE))
+  List_Filename_Variables<- unlist(strsplit(RegistrationData$File_ID[RowI],"_", fixed = TRUE))
   RegistrationData$Date[RowI]<-List_Filename_Variables[1]
   RegistrationData$Subject_ID[RowI]<-List_Filename_Variables[2]
   RegistrationData$Group[RowI]<-List_Filename_Variables[3]
@@ -263,20 +261,13 @@ for(RowI in 1:dim(RegistrationData)[1]){
   }  # If 
 } ## End of for each Row and center and scale the data
 
-write.table(RegistrationData, file=file.path(OutputDirPath, "RegistrationData_Coordinates_Processed.csv"), row.names=FALSE, sep = ",")
-
-
-
-
-
-
 # Pre-Process the Data ----------------------------------------------------
 
 # Transform File_ID into factor
 MergedInputData$File_ID<-as.factor(MergedInputData$File_ID)
 
 ## Make sure Slice, Label and Channel are present
-if(( any(colnames(MergedInputData)=="Slice")==FALSE ) && ( any(colnames(MergedInputData)=="Label")==FALSE )    && ( any(colnames(MergedInputData)=="Channel")==FALSE )){
+if((any(colnames(MergedInputData)=="Slice")==FALSE ) && ( any(colnames(MergedInputData)=="Label")==FALSE )    && ( any(colnames(MergedInputData)=="Channel")==FALSE )){
   MergedInputData$Slice<-rep(1,dim(MergedInputData)[1])
   MergedInputData$Channel<-MergedInputData$Slice
   MergedInputData$Label<-MergedInputData$File_ID
@@ -313,7 +304,6 @@ if(( any(colnames(MergedInputData)=="Slice")==FALSE ) && ( any(colnames(MergedIn
 }
 
 ## Make sure MarkerType and Counter are present
-
 if(( any(colnames(MergedInputData)=="Type")==FALSE ) && ( any(colnames(MergedInputData)=="Counter")==FALSE ) ){
   MergedInputData$Type<-as.factor(rep(paste0("Type_",1),dim(MergedInputData)[1]))
   MergedInputData$Counter<-as.factor(rep(paste0("Counter_",1),dim(MergedInputData)[1]))
@@ -324,15 +314,77 @@ if(( any(colnames(MergedInputData)=="Type")==FALSE ) && ( any(colnames(MergedInp
   MergedInputData$Counter<-as.factor(MergedInputData$Counter)
    MergedInputData$Type<-MergedInputData$Counter
 }
+MergedInputData$Marker_ID<-as.factor(sprintf("%03d", as.numeric(as.character(MergedInputData$Counter))))
+
+for(RowI in 1:length(MergedInputData$File_ID)){
+  Marker_IDI<-MergedInputData$Marker_ID[RowI]
+  MergedInputData$Marker_Name[RowI]<-as.character(MarkerData$Marker_Name[MarkerData$Marker_ID==Marker_IDI])          
+}
+MergedInputData$Marker_Name<-as.factor( MergedInputData$Marker_Name)
+MergedInputData$File_ID<-as.factor(MergedInputData$File_ID)
+# Gather the Data into MetaData Table -------------------------------------
+
+##Bring the Marker Data
+for (FileI in 1:length(MergedInputData$File_ID)){
+  File_IDI<-MergedInputData$File_ID[FileI]
+  InputDataI<-MergedInputData[MergedInputData$File_ID==File_IDI,] # Get the Data of a given Image
+  #Refresh the Factor
+  InputDataI$Marker_Name<-as.factor(InputDataI$Marker_Name)
+  Nb_Marker_Types<-nlevels(InputDataI$Marker_Name)
+  RegistrationData$Nb_Marker_Types[RegistrationData$File_ID==File_IDI]<-Nb_Marker_Types
+ 
+}
+
+for(MarkerI in 1:length(MarkerData$Marker_Name)){
+  Marker_IDI<-MarkerData$Marker_ID[MarkerI]
+  Marker_NameI<-MarkerData$Marker_Name[MarkerI]
+ RegistrationData$MarkerI<-NA
+ names(RegistrationData)[(dim(RegistrationData)[2])]<-paste0("Marker_",  sprintf("%03d", as.numeric(Marker_IDI)))
+ RegistrationData$CounterNameI<-NA
+ names(RegistrationData)[(dim(RegistrationData)[2])]<-paste0(Marker_NameI)
+  }
+
+## Add the Counts of each marker
+for (FileI in 1:length(RegistrationData$File_ID)){
+  File_IDI<-RegistrationData$File_ID[FileI]
+  InputDataI<-MergedInputData[MergedInputData$File_ID==File_IDI,] # Get the Data of a given Image
+  #Refresh the Factor
+  InputDataI$Marker_ID<-as.factor(InputDataI$Marker_ID)
+  InputDataI$Marker_Name<-as.factor(InputDataI$Marker_Name)
+  
+  SummaryTable_Marker_ID<-as.data.frame(table(InputDataI$Marker_ID))
+  SummaryTable_Marker_ID$Marker_ID<-SummaryTable_Marker_ID$Var1
+  SummaryTable_Marker_ID$Counts<-SummaryTable_Marker_ID$Freq
+  SummaryTable_Marker_ID$Var1<-NULL
+  SummaryTable_Marker_ID$Freq<-NULL
+  
+  SummaryTable_Marker_Name<-as.data.frame(table(InputDataI$Marker_Name))
+  SummaryTable_Marker_Name$Marker_Name<-SummaryTable_Marker_Name$Var1
+  SummaryTable_Marker_Name$Counts<-SummaryTable_Marker_Name$Freq
+  SummaryTable_Marker_Name$Var1<-NULL
+  SummaryTable_Marker_Name$Freq<-NULL
+  
+  for(MarkerI in 1:length(SummaryTable_Marker_ID$Marker_ID)){
+    Marker_IDI<-as.character(SummaryTable_Marker_ID$Marker_ID[MarkerI])
+    Counts_Marker_IDI<-as.integer(SummaryTable_Marker_ID$Counts[MarkerI])
+    RegistrationData[RegistrationData$File_ID==File_IDI, names(RegistrationData)==paste0("Marker_",Marker_IDI)]<-Counts_Marker_IDI
+  }
+  
+  for(MarkerI in 1:length(SummaryTable_Marker_Name$Marker_Name)){
+    Marker_NameI<-as.character(SummaryTable_Marker_Name$Marker_Name[MarkerI])
+    Counts_Marker_NameI<-as.integer(SummaryTable_Marker_Name$Counts[MarkerI])
+    RegistrationData[RegistrationData$File_ID==File_IDI, names(RegistrationData)==Marker_NameI]<-Counts_Marker_NameI
+  }
+  
+  
+}
+MetaData<-RegistrationData
+write.table(MetaData, file=file.path(OutputDirPath, "Metadata.csv"), row.names=FALSE, sep = ",")
 
 
-
-
-# Process each level of File_ID aka process each File separatelye -------------------------------------------------------
-
+# Process each level of File_ID aka process each File separatly -------------------------------------------------------
 for (FileI in 1:nlevels(MergedInputData$File_ID)){
   File_IDI<-levels(MergedInputData$File_ID)[FileI]
-  
   InputDataI<-MergedInputData[MergedInputData$File_ID==File_IDI,] # Get the Data of a given Image
   
   
@@ -344,11 +396,11 @@ for (FileI in 1:nlevels(MergedInputData$File_ID)){
   
   if(RegistrationDataI$Resolution_Unit!="pixels") {
     ImageResolutionI<-as.numeric(RegistrationDataI$Resolution_Pixels_per_Unit)
-    InputDataI$X_Pixel<- InputDataI$X * ImageResolutionI
-    InputDataI$Y_Pixel<- InputDataI$Y * ImageResolutionI
+    InputDataI$X_Pixel<- as.numeric(InputDataI$X) * ImageResolutionI
+    InputDataI$Y_Pixel<- as.numeric(InputDataI$Y) * ImageResolutionI
   } else { ## Else data is already in pixels
-    InputDataI$X_Pixel<- InputDataI$X
-    InputDataI$Y_Pixel<- InputDataI$Y
+    InputDataI$X_Pixel<- as.numeric(InputDataI$X)
+    InputDataI$Y_Pixel<- as.numeric(InputDataI$Y)
   }
   
   # Center the data on the central canal
@@ -401,7 +453,6 @@ for (FileI in 1:nlevels(MergedInputData$File_ID)){
 }
 
 
-
 # Plot by File ---------------------------------------------------------
 # Process each level of File_ID aka process each File separately
 for (FileI in 1:nlevels(OutputData$File_ID)){
@@ -424,9 +475,9 @@ for (FileI in 1:nlevels(OutputData$File_ID)){
      xaxp=c(-Xlim,Xlim,4),
       ylim=c(-Ylim,Ylim),
       xlim=c(-Xlim,Xlim),
-       type="p", col=OutputDataI$Counter,
+       type="p", col=OutputDataI$Marker_Name,
        main=File_IDI, ylab="Relative position to CC (pixel)", xlab="Relative position to CC (pixel)", lwd=1)
-  legend("bottomleft", title="Marker Type",legend=unique(OutputDataI$Type), bty="n", col=1:length(OutputDataI$Type),pch=16)
+  legend("bottomleft", title="Marker",legend=unique(OutputDataI$Marker_Name), bty="n", col=1:length(OutputDataI$Marker_Name),pch=16, cex=0.7)
   points(mean(OutputDataI$CC_X_Pixel_Centered),mean(OutputDataI$CC_Y_Pixel_Centered), col="black", pch=3)
   points(mean(OutputDataI$DE_R_X_Pixel_Centered),mean(OutputDataI$DE_R_Y_Pixel_Centered), col="black", pch=3)
   points(mean(OutputDataI$LE_R_X_Pixel_Centered),mean(OutputDataI$LE_R_Y_Pixel_Centered), col="black", pch=3)
@@ -434,11 +485,21 @@ for (FileI in 1:nlevels(OutputData$File_ID)){
   points(mean(OutputDataI$DE_L_X_Pixel_Centered),mean(OutputDataI$DE_L_Y_Pixel_Centered), col="black", pch=3)
   points(mean(OutputDataI$LE_L_X_Pixel_Centered),mean(OutputDataI$LE_L_Y_Pixel_Centered), col="black", pch=3)
   points(mean(OutputDataI$VE_L_X_Pixel_Centered),mean(OutputDataI$VE_L_Y_Pixel_Centered), col="black", pch=3)
-  legend("top",
-         c("Left ; Total ; Right",paste0(LeftCountOutputDataI," ; ",TotalCountOutputDataI," ; ",RightCountOutputDataI)),
-         text.col=c("black"),
-         bty="n", xjust=0.5, yjust=0.5,
-         cex=0.75) # Add legend
+  
+  LegendTop <- legend("top", legend = c(" ", " "),
+                      text.width = strwidth("Left + Right = Total"),
+                      xjust = 0.5, yjust = 0.5,
+                      title = "Nb of Cells", cex=0.7, bty="n")
+  text(LegendTop$rect$left + LegendTop$rect$w/2, LegendTop$text$y,
+       c("Left + Right = Total",
+         paste0(LeftCountOutputDataI," + ",RightCountOutputDataI," = ",TotalCountOutputDataI)),
+       cex=0.7)
+
+  
+  
+  
+  
+  
       dev.off() # Close and save the graph
   
   # Plot scaled coordinates for each file
@@ -452,9 +513,9 @@ for (FileI in 1:nlevels(OutputData$File_ID)){
        xaxp=c(-Xlim,Xlim,4),
        ylim=c(-Ylim,Ylim),
        xlim=c(-Xlim,Xlim),
-       type="p", col=OutputDataI$Type,
+       type="p", col=OutputDataI$Marker_Name,
        main=File_IDI, ylab="Relative position to CC", xlab="Relative position to CC", lwd=1)
-  legend("bottomleft", title="Marker Type",legend=unique(OutputDataI$Type), bty="n", col=1:length(OutputDataI$Type),pch=16)
+  legend("bottomleft", title="Marker",legend=unique(OutputDataI$Marker_Name), bty="n", col=1:length(OutputDataI$Type),pch=16)
   
    points(mean(OutputDataI$CC_X_Scaled),mean(OutputDataI$CC_Y_Scaled), col="black", pch=3)
   points(mean(OutputDataI$DE_R_X_Scaled),mean(OutputDataI$DE_R_Y_Scaled), col="black", pch=3)
@@ -463,11 +524,16 @@ for (FileI in 1:nlevels(OutputData$File_ID)){
   points(mean(OutputDataI$DE_L_X_Scaled),mean(OutputDataI$DE_L_Y_Scaled), col="black", pch=3)
   points(mean(OutputDataI$LE_L_X_Scaled),mean(OutputDataI$LE_L_Y_Scaled), col="black", pch=3)
   points(mean(OutputDataI$VE_L_X_Scaled),mean(OutputDataI$VE_L_Y_Scaled), col="black", pch=3)
-  legend("top",
-         c("Left ; Total ; Right",paste0(LeftCountOutputDataI," ; ",TotalCountOutputDataI," ; ",RightCountOutputDataI)),
-         text.col=c("black"),
-         bty="n", xjust=0.5, yjust=0.5,
-         cex=0.75) # Add legend
+  
+  LegendTop <- legend("top", legend = c(" ", " "),
+                      text.width = strwidth("Left + Right = Total"),
+                      xjust = 0.5, yjust = 0.5,
+                      title = "Nb of Cells", cex=0.7, bty="n")
+  text(LegendTop$rect$left + LegendTop$rect$w/2, LegendTop$text$y,
+       c("Left + Right = Total",
+         paste0(LeftCountOutputDataI," + ",RightCountOutputDataI," = ",TotalCountOutputDataI)),
+       cex=0.7)
+  
   dev.off() # Close and save the graph
 }
 
@@ -479,10 +545,10 @@ for (FileI in 1:nlevels(OutputData$File_ID)){
 
 # Plot By Subject ID ----------------------------------------------------
 OutputData$Subject_ID<-as.factor(OutputData$Subject_ID)
-for (FileI in 1:nlevels(OutputData$Subject_ID)){
-  Animal_IDI<-levels(OutputData$Subject_ID)[FileI]
-  OutputDataI<-OutputData[OutputData$Subject_ID==Animal_IDI,] # Get the Data of a given Subject
-  write.table(OutputDataI, file=file.path(OutputDirPath, "Tables by Subject",paste0(Animal_IDI,".csv")), row.names=FALSE, sep = ",")
+for (SubjectI in 1:nlevels(OutputData$Subject_ID)){
+  Subject_IDI<-levels(OutputData$Subject_ID)[SubjectI]
+  OutputDataI<-OutputData[OutputData$Subject_ID==Subject_IDI,] # Get the Data of a given Subject
+  write.table(OutputDataI, file=file.path(OutputDirPath, "Tables by Subject",paste0(Subject_IDI,".csv")), row.names=FALSE, sep = ",")
   
   OutputDataI$File_ID<-factor(OutputDataI$File_ID)
   LeftCountsPerImage<-c()
@@ -504,7 +570,7 @@ for (FileI in 1:nlevels(OutputData$Subject_ID)){
   
   
   # Plot RAW coordinates for each file
-  cairo_pdf(file.path(OutputDirPath, "Graphs by Subject", paste0(Animal_IDI,"_Raw_Graph.pdf"))) # Open the graph as pdf
+  cairo_pdf(file.path(OutputDirPath, "Graphs by Subject", paste0(Subject_IDI,"_Raw_Graph.pdf"))) # Open the graph as pdf
   Xlim=round(max(abs(c(mean(OutputDataI$LE_L_X_Pixel_Centered),mean(OutputDataI$LE_R_X_Pixel_Centered),max(abs(OutputDataI$X_Pixel_Centered))))),-1)
   Ylim=round(max(abs(c(mean(OutputDataI$DE_L_Y_Pixel_Centered),mean(OutputDataI$DE_R_Y_Pixel_Centered),mean(OutputDataI$VE_L_Y_Pixel_Centered),mean(OutputDataI$VE_R_Y_Pixel_Centered), max(abs(OutputDataI$Y_Pixel_Centered))))),-1)
   plot(OutputDataI$X_Pixel_Centered, OutputDataI$Y_Pixel_Centered,
@@ -514,9 +580,9 @@ for (FileI in 1:nlevels(OutputData$Subject_ID)){
        xaxp=c(-Xlim,Xlim,4),
        ylim=c(-Ylim,Ylim),
        xlim=c(-Xlim,Xlim),
-       type="p", col=OutputDataI$Type,
-       main=Animal_IDI, ylab="Relative position to CC (pixel)", xlab="Relative position to CC (pixel)", lwd=1)
-  legend("bottomleft", title="Marker Type",legend=unique(OutputDataI$Type), bty="n", col=1:length(OutputDataI$Type),pch=16)
+       type="p", col=OutputDataI$Marker_Name,
+       main=Subject_IDI, ylab="Relative position to CC (pixel)", xlab="Relative position to CC (pixel)", lwd=1)
+  legend("bottomleft", title="Marker",legend=unique(OutputDataI$Marker_Name), bty="n", col=1:length(OutputDataI$Marker_Name),pch=16,cex=0.7)
   
   points(mean(OutputDataI$CC_X_Pixel_Centered),mean(OutputDataI$CC_Y_Pixel_Centered), col="black", pch=3)
   points(mean(OutputDataI$DE_R_X_Pixel_Centered),mean(OutputDataI$DE_R_Y_Pixel_Centered), col="black", pch=3)
@@ -525,25 +591,34 @@ for (FileI in 1:nlevels(OutputData$Subject_ID)){
   points(mean(OutputDataI$DE_L_X_Pixel_Centered),mean(OutputDataI$DE_L_Y_Pixel_Centered), col="black", pch=3)
   points(mean(OutputDataI$LE_L_X_Pixel_Centered),mean(OutputDataI$LE_L_Y_Pixel_Centered), col="black", pch=3)
   points(mean(OutputDataI$VE_L_X_Pixel_Centered),mean(OutputDataI$VE_L_Y_Pixel_Centered), col="black", pch=3)
-  legend("top",
-         c("Left ; Total ; Right",paste0(LeftCountOutputDataI," ; ",TotalCountOutputDataI," ; ",RightCountOutputDataI)),
-         text.col=c("black"),
-         bty="n", xjust=0.5, yjust=0.5,
-         cex=0.75) # Add legend
-  legend("topleft",
-         c("Mean ; SD ; Nb Images",paste0(signif(mean(LeftCountsPerImage),4)," ; ",signif(sd(LeftCountsPerImage),4)," ; ",length(LeftCountsPerImage))),
-         text.col=c("black"),
-         bty="n", xjust=0.5, yjust=0.5,
-         cex=0.75) # Add legend
-  legend("topright",
-         c("Mean ; SD ; Nb Images",paste0(signif(mean(RightCountsPerImage),4)," ; ",signif(sd(RightCountsPerImage),4)," ; ",length(RightCountsPerImage))),
-         text.col=c("black"),
-         bty="n", xjust=0.5, yjust=0.5,
-         cex=0.75) # Add legend
+  LegendTop <- legend("top", legend = c(" ", " "),
+                                 text.width = strwidth("Left + Right = Total"),
+                                 xjust = 0.5, yjust = 0.5,
+                                 title = "Nb of Cells", cex=0.7, bty="n")
+  text(LegendTop$rect$left + LegendTop$rect$w/2, LegendTop$text$y,
+       c("Left + Right = Total",
+         paste0(LeftCountOutputDataI," + ",RightCountOutputDataI," = ",TotalCountOutputDataI)),
+       cex=0.7)
+  
+  LegendLeft <- legend("topleft", legend = c(" "),
+                                    xjust =0, yjust = 0,
+                      title = "Avg Cell/Section (+/- SD) ; n Sections", cex=0.7, bty="n")
+  
+  text(LegendLeft$rect$left + LegendLeft$rect$w/2, LegendLeft$text$y,
+       c( paste0(signif(mean(LeftCountsPerImage),3)," (+/- ",signif(sd(LeftCountsPerImage),3),") ; n = ",length(LeftCountsPerImage))),
+       cex=0.7)
+  
+  LegendRight <- legend("topright", legend = c(" "),
+                       xjust =0, yjust = 0,
+                       title = "Avg Cell/Section (+/- SD) ; n Sections", cex=0.7, bty="n")
+  
+  text(LegendRight$rect$left + LegendRight$rect$w/2, LegendRight$text$y,
+       c( paste0(signif(mean(RightCountsPerImage),3)," (+/- ",signif(sd(RightCountsPerImage),3),") ; n = ",length(RightCountsPerImage))),
+       cex=0.7)
   dev.off() # Close and save the graph
   
   # Plot scaled coordinates for each file
-  cairo_pdf(file.path(OutputDirPath, "Graphs by Subject", paste0(Animal_IDI,"_Scaled_Graph.pdf"))) # Open the graph as pdf
+  cairo_pdf(file.path(OutputDirPath, "Graphs by Subject", paste0(Subject_IDI,"_Scaled_Graph.pdf"))) # Open the graph as pdf
   Xlim=round(max(abs(c(mean(OutputDataI$LE_L_X_Scaled),mean(OutputDataI$LE_R_X_Scaled),max(abs(OutputDataI$X_Scaled))))),2)
   Ylim=round(max(abs(c(mean(OutputDataI$DE_L_Y_Scaled),mean(OutputDataI$DE_R_Y_Scaled),mean(OutputDataI$VE_L_Y_Scaled),mean(OutputDataI$VE_R_Y_Scaled), max(abs(OutputDataI$Y_Scaled))))),2)
   plot(OutputDataI$X_Scaled, OutputDataI$Y_Scaled,
@@ -553,9 +628,9 @@ for (FileI in 1:nlevels(OutputData$Subject_ID)){
        xaxp=c(-Xlim,Xlim,4),
        ylim=c(-Ylim,Ylim),
        xlim=c(-Xlim,Xlim),
-       type="p", col=OutputDataI$Type,
-       main=Animal_IDI, ylab="Relative position to CC", xlab="Relative position to CC", lwd=1)
-  legend("bottomleft", title="Marker Type",legend=unique(OutputDataI$Type), bty="n", col=1:length(OutputDataI$Type),pch=16)
+       type="p", col=OutputDataI$Marker_Name,
+       main=Subject_IDI, ylab="Relative position to CC", xlab="Relative position to CC", lwd=1)
+  legend("bottomleft", title="Marker",legend=unique(OutputDataI$Marker_Name), bty="n", col=1:length(OutputDataI$Marker_Name),pch=16,cex=0.7)
   
   points(mean(OutputDataI$CC_X_Scaled),mean(OutputDataI$CC_Y_Scaled), col="black", pch=3)
   points(mean(OutputDataI$DE_R_X_Scaled),mean(OutputDataI$DE_R_Y_Scaled), col="black", pch=3)
@@ -564,21 +639,31 @@ for (FileI in 1:nlevels(OutputData$Subject_ID)){
   points(mean(OutputDataI$DE_L_X_Scaled),mean(OutputDataI$DE_L_Y_Scaled), col="black", pch=3)
   points(mean(OutputDataI$LE_L_X_Scaled),mean(OutputDataI$LE_L_Y_Scaled), col="black", pch=3)
   points(mean(OutputDataI$VE_L_X_Scaled),mean(OutputDataI$VE_L_Y_Scaled), col="black", pch=3)
-  legend("top",
-         c("Left ; Total ; Right",paste0(LeftCountOutputDataI," ; ",TotalCountOutputDataI," ; ",RightCountOutputDataI)),
-         text.col=c("black"),
-         bty="n", xjust=0.5, yjust=0.5,
-         cex=0.75) # Add legend
-  legend("topleft",
-         c("Mean ; SD ; Nb Images",paste0(signif(mean(LeftCountsPerImage),4)," ; ",signif(sd(LeftCountsPerImage),4)," ; ",length(LeftCountsPerImage))),
-         text.col=c("black"),
-         bty="n", xjust=0.5, yjust=0.5,
-         cex=0.75) # Add legend
-  legend("topright",
-         c("Mean ; SD ; Nb Images",paste0(signif(mean(RightCountsPerImage),4)," ; ",signif(sd(RightCountsPerImage),4)," ; ",length(RightCountsPerImage))),
-         text.col=c("black"),
-         bty="n", xjust=0.5, yjust=0.5,
-         cex=0.75) # Add legend
+  
+  LegendTop <- legend("top", legend = c(" ", " "),
+                      text.width = strwidth("Left + Right = Total"),
+                      xjust = 0.5, yjust = 0.5,
+                      title = "Nb of Cells", cex=0.7, bty="n")
+  text(LegendTop$rect$left + LegendTop$rect$w/2, LegendTop$text$y,
+       c("Left + Right = Total",
+         paste0(LeftCountOutputDataI," + ",RightCountOutputDataI," = ",TotalCountOutputDataI)),
+       cex=0.7)
+  
+  LegendLeft <- legend("topleft", legend = c(" "),
+                       xjust =0, yjust = 0,
+                       title = "Avg Cell/Section (+/- SD) ; n Sections", cex=0.7, bty="n")
+  
+  text(LegendLeft$rect$left + LegendLeft$rect$w/2, LegendLeft$text$y,
+       c( paste0(signif(mean(LeftCountsPerImage),3)," (+/- ",signif(sd(LeftCountsPerImage),3),") ; n = ",length(LeftCountsPerImage))),
+       cex=0.7)
+  
+  LegendRight <- legend("topright", legend = c(" "),
+                        xjust =0, yjust = 0,
+                        title = "Avg Cell/Section (+/- SD) ; n Sections", cex=0.7, bty="n")
+  
+  text(LegendRight$rect$left + LegendRight$rect$w/2, LegendRight$text$y,
+       c( paste0(signif(mean(RightCountsPerImage),3)," (+/- ",signif(sd(RightCountsPerImage),3),") ; n = ",length(RightCountsPerImage))),
+       cex=0.7)
    dev.off() # Close and save the graph
 }
 
