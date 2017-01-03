@@ -124,7 +124,7 @@ CreateOutputDir.Function <- function(OutputDirLocation, OutputDirName, SubDirLis
 
 # HouseKeeping ------------------------------------------------------------
 # Install Required Packages
-ListRequiredPackage=c("zoo", "tcltk", "MASS", "Hotelling")
+ListRequiredPackage=c("zoo", "tcltk", "MASS", "Hotelling","ggplot2")
 InstallRequiredPackage.Function(ListPackage=ListRequiredPackage)
 
 
@@ -312,7 +312,7 @@ if(( any(colnames(MergedInputData)=="Type")==FALSE ) && ( any(colnames(MergedInp
   MergedInputData$Counter<-MergedInputData$Type
 } else if(( any(colnames(MergedInputData)=="Type")==FALSE ) && ( any(colnames(MergedInputData)=="Counter")==TRUE ) ){
   MergedInputData$Counter<-as.factor(MergedInputData$Counter)
-   MergedInputData$Type<-MergedInputData$Counter
+  MergedInputData$Type<-MergedInputData$Counter
 }
 MergedInputData$Marker_ID<-as.factor(sprintf("%03d", as.numeric(as.character(MergedInputData$Counter))))
 
@@ -332,17 +332,17 @@ for (FileI in 1:length(MergedInputData$File_ID)){
   InputDataI$Marker_Name<-as.factor(InputDataI$Marker_Name)
   Nb_Marker_Types<-nlevels(InputDataI$Marker_Name)
   RegistrationData$Nb_Marker_Types[RegistrationData$File_ID==File_IDI]<-Nb_Marker_Types
- 
+  
 }
 
 for(MarkerI in 1:length(MarkerData$Marker_Name)){
   Marker_IDI<-MarkerData$Marker_ID[MarkerI]
   Marker_NameI<-MarkerData$Marker_Name[MarkerI]
- RegistrationData$MarkerI<-NA
- names(RegistrationData)[(dim(RegistrationData)[2])]<-paste0("Marker_",  sprintf("%03d", as.numeric(Marker_IDI)))
- RegistrationData$CounterNameI<-NA
- names(RegistrationData)[(dim(RegistrationData)[2])]<-paste0(Marker_NameI)
-  }
+  RegistrationData$MarkerI<-NA
+  names(RegistrationData)[(dim(RegistrationData)[2])]<-paste0("Marker_",  sprintf("%03d", as.numeric(Marker_IDI)))
+  RegistrationData$CounterNameI<-NA
+  names(RegistrationData)[(dim(RegistrationData)[2])]<-paste0(Marker_NameI)
+}
 
 ## Add the Counts of each marker
 for (FileI in 1:length(RegistrationData$File_ID)){
@@ -436,7 +436,7 @@ for (FileI in 1:nlevels(MergedInputData$File_ID)){
   
   ## Add the RegistrationData to the OutputData
   MissingVars<- setdiff(colnames(RegistrationDataI), colnames(OutputDataI)) # Get the Missing Columns
- 
+  
   if (length(MissingVars)>0){ # Compare the Nb Of Columns if Merge file has more columns
     for (MissingVariableI in 1: length(MissingVars)){
       OutputDataI[[paste0(MissingVars[MissingVariableI])]] <- rep(RegistrationDataI[[paste0(MissingVars[MissingVariableI])]], dim(OutputDataI)[1])
@@ -444,12 +444,12 @@ for (FileI in 1:nlevels(MergedInputData$File_ID)){
   }
   
   # Merge Output Files together
-    if(FileI==1){
+  if(FileI==1){
     OutputData<-OutputDataI
   } else {
     OutputData<-rbind(OutputData, OutputDataI)
   }
-    write.table(OutputData, file=file.path(OutputDirPath, "Data_Coordinates_Processed.csv"), row.names=FALSE, sep = ",")
+  write.table(OutputData, file=file.path(OutputDirPath, "Data_Coordinates_Processed.csv"), row.names=FALSE, sep = ",")
 }
 
 
@@ -463,21 +463,24 @@ for (FileI in 1:nlevels(OutputData$File_ID)){
   TotalCountOutputDataI<-dim(OutputDataI)[1]
   LeftCountOutputDataI<-dim(OutputDataI[OutputDataI$X_Scaled<0,])[1]
   RightCountOutputDataI<-dim(OutputDataI[OutputDataI$X_Scaled>=0,])[1]
-  
+  if(FileI==1){
+    dir.create(file.path(OutputDirPath, "Graphs by File","Raw"))
+    dir.create(file.path(OutputDirPath, "Graphs by File","Scaled"))
+  }
   # Plot RAW coordinates for each file
-  cairo_pdf(file.path(OutputDirPath, "Graphs by File", paste0(File_IDI,"_Raw_Graph.pdf"))) # Open the graph as pdf
+  cairo_pdf(file.path(OutputDirPath, "Graphs by File", "Raw", paste0(File_IDI,"_Raw_Graph.pdf"))) # Open the graph as pdf
   Xlim=round(max(abs(c(mean(OutputDataI$LE_L_X_Pixel_Centered),mean(OutputDataI$LE_R_X_Pixel_Centered),max(abs(OutputDataI$X_Pixel_Centered))))),-1)
   Ylim=round(max(abs(c(mean(OutputDataI$DE_L_Y_Pixel_Centered),mean(OutputDataI$DE_R_Y_Pixel_Centered),mean(OutputDataI$VE_L_Y_Pixel_Centered),mean(OutputDataI$VE_R_Y_Pixel_Centered), max(abs(OutputDataI$Y_Pixel_Centered))))),-1)
   plot(OutputDataI$X_Pixel_Centered, OutputDataI$Y_Pixel_Centered,
-       pch=16,
+       pch=1,
        bty="n",
-     yaxp=c(-Ylim,Ylim,4),
-     xaxp=c(-Xlim,Xlim,4),
-      ylim=c(-Ylim,Ylim),
-      xlim=c(-Xlim,Xlim),
+       yaxp=c(-Ylim,Ylim,4),
+       xaxp=c(-Xlim,Xlim,4),
+       ylim=c(-Ylim,Ylim),
+       xlim=c(-Xlim,Xlim),
        type="p", col=OutputDataI$Marker_Name,
        main=File_IDI, ylab="Relative position to CC (pixel)", xlab="Relative position to CC (pixel)", lwd=1)
-  legend("bottomleft", title="Marker",legend=unique(OutputDataI$Marker_Name), bty="n", col=1:length(OutputDataI$Marker_Name),pch=16, cex=0.7)
+  legend("bottomleft", title="Marker",legend=unique(OutputDataI$Marker_Name), bty="n", col=1:length(OutputDataI$Marker_Name),pch=1, cex=0.7)
   points(mean(OutputDataI$CC_X_Pixel_Centered),mean(OutputDataI$CC_Y_Pixel_Centered), col="black", pch=3)
   points(mean(OutputDataI$DE_R_X_Pixel_Centered),mean(OutputDataI$DE_R_Y_Pixel_Centered), col="black", pch=3)
   points(mean(OutputDataI$LE_R_X_Pixel_Centered),mean(OutputDataI$LE_R_Y_Pixel_Centered), col="black", pch=3)
@@ -494,20 +497,14 @@ for (FileI in 1:nlevels(OutputData$File_ID)){
        c("Left + Right = Total",
          paste0(LeftCountOutputDataI," + ",RightCountOutputDataI," = ",TotalCountOutputDataI)),
        cex=0.7)
-
-  
-  
-  
-  
-  
-      dev.off() # Close and save the graph
+  dev.off() # Close and save the graph
   
   # Plot scaled coordinates for each file
-  cairo_pdf(file.path(OutputDirPath, "Graphs by File", paste0(File_IDI,"_Scaled_Graph.pdf"))) # Open the graph as pdf
+  cairo_pdf(file.path(OutputDirPath, "Graphs by File","Scaled", paste0(File_IDI,"_Scaled_Graph.pdf"))) # Open the graph as pdf
   Xlim=round(max(abs(c(mean(OutputDataI$LE_L_X_Scaled),mean(OutputDataI$LE_R_X_Scaled),max(abs(OutputDataI$X_Scaled))))),2)
   Ylim=round(max(abs(c(mean(OutputDataI$DE_L_Y_Scaled),mean(OutputDataI$DE_R_Y_Scaled),mean(OutputDataI$VE_L_Y_Scaled),mean(OutputDataI$VE_R_Y_Scaled), max(abs(OutputDataI$Y_Scaled))))),2)
   plot(OutputDataI$X_Scaled, OutputDataI$Y_Scaled,
-       pch=16,
+       pch=1,
        bty="n",
        yaxp=c(-Ylim,Ylim,4),
        xaxp=c(-Xlim,Xlim,4),
@@ -515,9 +512,9 @@ for (FileI in 1:nlevels(OutputData$File_ID)){
        xlim=c(-Xlim,Xlim),
        type="p", col=OutputDataI$Marker_Name,
        main=File_IDI, ylab="Relative position to CC", xlab="Relative position to CC", lwd=1)
-  legend("bottomleft", title="Marker",legend=unique(OutputDataI$Marker_Name), bty="n", col=1:length(OutputDataI$Type),pch=16)
+  legend("bottomleft", title="Marker",legend=unique(OutputDataI$Marker_Name), bty="n", col=1:length(OutputDataI$Type),pch=1,cex=0.7)
   
-   points(mean(OutputDataI$CC_X_Scaled),mean(OutputDataI$CC_Y_Scaled), col="black", pch=3)
+  points(mean(OutputDataI$CC_X_Scaled),mean(OutputDataI$CC_Y_Scaled), col="black", pch=3)
   points(mean(OutputDataI$DE_R_X_Scaled),mean(OutputDataI$DE_R_Y_Scaled), col="black", pch=3)
   points(mean(OutputDataI$LE_R_X_Scaled),mean(OutputDataI$LE_R_Y_Scaled), col="black", pch=3)
   points(mean(OutputDataI$VE_R_X_Scaled),mean(OutputDataI$VE_R_Y_Scaled), col="black", pch=3)
@@ -566,15 +563,18 @@ for (SubjectI in 1:nlevels(OutputData$Subject_ID)){
   LeftCountOutputDataI<-dim(OutputDataI[OutputDataI$X_Scaled<0,])[1]
   RightCountOutputDataI<-dim(OutputDataI[OutputDataI$X_Scaled>=0,])[1]
   
-  
+  if(SubjectI==1){
+    dir.create(file.path(OutputDirPath, "Graphs by Subject","Raw"))
+    dir.create(file.path(OutputDirPath, "Graphs by Subject","Scaled"))
+  }
   
   
   # Plot RAW coordinates for each file
-  cairo_pdf(file.path(OutputDirPath, "Graphs by Subject", paste0(Subject_IDI,"_Raw_Graph.pdf"))) # Open the graph as pdf
+  cairo_pdf(file.path(OutputDirPath, "Graphs by Subject", "Raw",paste0(Subject_IDI,"_Raw_Graph.pdf"))) # Open the graph as pdf
   Xlim=round(max(abs(c(mean(OutputDataI$LE_L_X_Pixel_Centered),mean(OutputDataI$LE_R_X_Pixel_Centered),max(abs(OutputDataI$X_Pixel_Centered))))),-1)
   Ylim=round(max(abs(c(mean(OutputDataI$DE_L_Y_Pixel_Centered),mean(OutputDataI$DE_R_Y_Pixel_Centered),mean(OutputDataI$VE_L_Y_Pixel_Centered),mean(OutputDataI$VE_R_Y_Pixel_Centered), max(abs(OutputDataI$Y_Pixel_Centered))))),-1)
   plot(OutputDataI$X_Pixel_Centered, OutputDataI$Y_Pixel_Centered,
-       pch=16,
+       pch=1,
        bty="n",
        yaxp=c(-Ylim,Ylim,4),
        xaxp=c(-Xlim,Xlim,4),
@@ -582,7 +582,7 @@ for (SubjectI in 1:nlevels(OutputData$Subject_ID)){
        xlim=c(-Xlim,Xlim),
        type="p", col=OutputDataI$Marker_Name,
        main=Subject_IDI, ylab="Relative position to CC (pixel)", xlab="Relative position to CC (pixel)", lwd=1)
-  legend("bottomleft", title="Marker",legend=unique(OutputDataI$Marker_Name), bty="n", col=1:length(OutputDataI$Marker_Name),pch=16,cex=0.7)
+  legend("bottomleft", title="Marker",legend=unique(OutputDataI$Marker_Name), bty="n", col=1:length(OutputDataI$Marker_Name),pch=1,cex=0.7)
   
   points(mean(OutputDataI$CC_X_Pixel_Centered),mean(OutputDataI$CC_Y_Pixel_Centered), col="black", pch=3)
   points(mean(OutputDataI$DE_R_X_Pixel_Centered),mean(OutputDataI$DE_R_Y_Pixel_Centered), col="black", pch=3)
@@ -592,25 +592,25 @@ for (SubjectI in 1:nlevels(OutputData$Subject_ID)){
   points(mean(OutputDataI$LE_L_X_Pixel_Centered),mean(OutputDataI$LE_L_Y_Pixel_Centered), col="black", pch=3)
   points(mean(OutputDataI$VE_L_X_Pixel_Centered),mean(OutputDataI$VE_L_Y_Pixel_Centered), col="black", pch=3)
   LegendTop <- legend("top", legend = c(" ", " "),
-                                 text.width = strwidth("Left + Right = Total"),
-                                 xjust = 0.5, yjust = 0.5,
-                                 title = "Nb of Cells", cex=0.7, bty="n")
+                      text.width = strwidth("Left + Right = Total"),
+                      xjust = 0.5, yjust = 0.5,
+                      title = "Nb of Cells", cex=0.7, bty="n")
   text(LegendTop$rect$left + LegendTop$rect$w/2, LegendTop$text$y,
        c("Left + Right = Total",
          paste0(LeftCountOutputDataI," + ",RightCountOutputDataI," = ",TotalCountOutputDataI)),
        cex=0.7)
   
   LegendLeft <- legend("topleft", legend = c(" "),
-                                    xjust =0, yjust = 0,
-                      title = "Avg Cell/Section (+/- SD) ; n Sections", cex=0.7, bty="n")
+                       xjust =0, yjust = 0,
+                       title = "Avg Cell/Section (+/- SD) ; n Sections", cex=0.7, bty="n")
   
   text(LegendLeft$rect$left + LegendLeft$rect$w/2, LegendLeft$text$y,
        c( paste0(signif(mean(LeftCountsPerImage),3)," (+/- ",signif(sd(LeftCountsPerImage),3),") ; n = ",length(LeftCountsPerImage))),
        cex=0.7)
   
   LegendRight <- legend("topright", legend = c(" "),
-                       xjust =0, yjust = 0,
-                       title = "Avg Cell/Section (+/- SD) ; n Sections", cex=0.7, bty="n")
+                        xjust =0, yjust = 0,
+                        title = "Avg Cell/Section (+/- SD) ; n Sections", cex=0.7, bty="n")
   
   text(LegendRight$rect$left + LegendRight$rect$w/2, LegendRight$text$y,
        c( paste0(signif(mean(RightCountsPerImage),3)," (+/- ",signif(sd(RightCountsPerImage),3),") ; n = ",length(RightCountsPerImage))),
@@ -618,11 +618,11 @@ for (SubjectI in 1:nlevels(OutputData$Subject_ID)){
   dev.off() # Close and save the graph
   
   # Plot scaled coordinates for each file
-  cairo_pdf(file.path(OutputDirPath, "Graphs by Subject", paste0(Subject_IDI,"_Scaled_Graph.pdf"))) # Open the graph as pdf
+  cairo_pdf(file.path(OutputDirPath, "Graphs by Subject","Scaled", paste0(Subject_IDI,"_Scaled_Graph.pdf"))) # Open the graph as pdf
   Xlim=round(max(abs(c(mean(OutputDataI$LE_L_X_Scaled),mean(OutputDataI$LE_R_X_Scaled),max(abs(OutputDataI$X_Scaled))))),2)
   Ylim=round(max(abs(c(mean(OutputDataI$DE_L_Y_Scaled),mean(OutputDataI$DE_R_Y_Scaled),mean(OutputDataI$VE_L_Y_Scaled),mean(OutputDataI$VE_R_Y_Scaled), max(abs(OutputDataI$Y_Scaled))))),2)
   plot(OutputDataI$X_Scaled, OutputDataI$Y_Scaled,
-       pch=16,
+       pch=1,
        bty="n",
        yaxp=c(-Ylim,Ylim,4),
        xaxp=c(-Xlim,Xlim,4),
@@ -630,7 +630,7 @@ for (SubjectI in 1:nlevels(OutputData$Subject_ID)){
        xlim=c(-Xlim,Xlim),
        type="p", col=OutputDataI$Marker_Name,
        main=Subject_IDI, ylab="Relative position to CC", xlab="Relative position to CC", lwd=1)
-  legend("bottomleft", title="Marker",legend=unique(OutputDataI$Marker_Name), bty="n", col=1:length(OutputDataI$Marker_Name),pch=16,cex=0.7)
+  legend("bottomleft", title="Marker",legend=unique(OutputDataI$Marker_Name), bty="n", col=1:length(OutputDataI$Marker_Name),pch=1,cex=0.7)
   
   points(mean(OutputDataI$CC_X_Scaled),mean(OutputDataI$CC_Y_Scaled), col="black", pch=3)
   points(mean(OutputDataI$DE_R_X_Scaled),mean(OutputDataI$DE_R_Y_Scaled), col="black", pch=3)
@@ -664,12 +664,303 @@ for (SubjectI in 1:nlevels(OutputData$Subject_ID)){
   text(LegendRight$rect$left + LegendRight$rect$w/2, LegendRight$text$y,
        c( paste0(signif(mean(RightCountsPerImage),3)," (+/- ",signif(sd(RightCountsPerImage),3),") ; n = ",length(RightCountsPerImage))),
        cex=0.7)
-   dev.off() # Close and save the graph
+  dev.off() # Close and save the graph
+  
+  
+  
+  
 }
 
- # 
+
+
+
+
+
+
+
+# Calculate the Density and Plot Density per Subject ----------------------------------------------------
+OutputData$Subject_ID<-as.factor(OutputData$Subject_ID)
+for (SubjectI in 1:nlevels(OutputData$Subject_ID)){
+  Subject_IDI<-levels(OutputData$Subject_ID)[SubjectI]
+  OutputDataI<-OutputData[OutputData$Subject_ID==Subject_IDI,] # Get the Data of a given Subject
+  
+  OutputDataI$File_ID<-factor(OutputDataI$File_ID)
+  if(SubjectI==1){
+    dir.create(file.path(OutputDirPath, "Graphs by Subject","Density"))
+    dir.create(file.path(OutputDirPath, "Graphs by Subject","Density Normalized"))
+    dir.create(file.path(OutputDirPath, "Tables by Subject","Density Raw"))
+    dir.create(file.path(OutputDirPath, "Tables by Subject","Density Normalized"))
+  }
+  
+  ## Make the Density Plot per Subject per Marker
+  for(MarkerI in 1:nlevels(OutputDataI$Marker_Name)){
+    Marker_NameI<-levels(OutputDataI$Marker_Name)[MarkerI]
+    OutputDataI_MarkerI<-OutputDataI[OutputDataI$Marker_Name==Marker_NameI,]
+    Density_OutputDataI_MarkerI<-kde2d(OutputDataI_MarkerI$X_Scaled, OutputDataI_MarkerI$Y_Scaled, n=100, lims=c(-1.5,1.5,-1.5,1.5))
+    write.table(Density_OutputDataI_MarkerI, file=file.path(OutputDirPath, "Tables by Subject", "Density Raw",paste0(Subject_IDI,"_",Marker_NameI,".csv")), row.names=FALSE, sep = ",")
+    Normalized_Density_OutputDataI_MarkerI<-Density_OutputDataI_MarkerI
+    Normalized_Density_OutputDataI_MarkerI$z<- ((Density_OutputDataI_MarkerI$z-min(Density_OutputDataI_MarkerI$z))/(max(Density_OutputDataI_MarkerI$z)-min(Density_OutputDataI_MarkerI$z)))
+    write.table(Normalized_Density_OutputDataI_MarkerI, file=file.path(OutputDirPath, "Tables by Subject", "Density Normalized",paste0(Subject_IDI,"_",Marker_NameI,".csv")), row.names=FALSE, sep = ",")
+  }
+  
+  
+  
+  
+  # Plot scaled coordinates and add density
+  cairo_pdf(file.path(OutputDirPath, "Graphs by Subject","Density", paste0(Subject_IDI,"_Density_Graph.pdf"))) # Open the graph as pdf
+  Xlim=round(max(abs(c(mean(OutputDataI$LE_L_X_Scaled),mean(OutputDataI$LE_R_X_Scaled),max(abs(OutputDataI$X_Scaled))))),2)
+  Ylim=round(max(abs(c(mean(OutputDataI$DE_L_Y_Scaled),mean(OutputDataI$DE_R_Y_Scaled),mean(OutputDataI$VE_L_Y_Scaled),mean(OutputDataI$VE_R_Y_Scaled), max(abs(OutputDataI$Y_Scaled))))),2)
+  plot(OutputDataI$X_Scaled, OutputDataI$Y_Scaled,
+       pch=1,lwd=0.5, cex=0.5,
+       bty="n",
+       yaxp=c(-Ylim,Ylim,4),
+       xaxp=c(-Xlim,Xlim,4),
+       ylim=c(-Ylim,Ylim),
+       xlim=c(-Xlim,Xlim),
+       type="p", col=OutputDataI$Marker_Name,
+       main=Subject_IDI, ylab="Relative position to CC", xlab="Relative position to CC")
+  
+  legend("bottomleft", title="Marker",legend=unique(OutputDataI$Marker_Name), bty="n", col=1:length(OutputDataI$Marker_Name),pch=1,cex=0.5)
+  
+  points(mean(OutputDataI$CC_X_Scaled),mean(OutputDataI$CC_Y_Scaled), col="black", pch=3, cex=0.5)
+  points(mean(OutputDataI$DE_R_X_Scaled),mean(OutputDataI$DE_R_Y_Scaled), col="black", pch=3, cex=0.5)
+  points(mean(OutputDataI$LE_R_X_Scaled),mean(OutputDataI$LE_R_Y_Scaled), col="black", pch=3, cex=0.5)
+  points(mean(OutputDataI$VE_R_X_Scaled),mean(OutputDataI$VE_R_Y_Scaled), col="black", pch=3, cex=0.5)
+  points(mean(OutputDataI$DE_L_X_Scaled),mean(OutputDataI$DE_L_Y_Scaled), col="black", pch=3, cex=0.5)
+  points(mean(OutputDataI$LE_L_X_Scaled),mean(OutputDataI$LE_L_Y_Scaled), col="black", pch=3, cex=0.5)
+  points(mean(OutputDataI$VE_L_X_Scaled),mean(OutputDataI$VE_L_Y_Scaled), col="black", pch=3, cex=0.5)
+  
+  LegendTop <- legend("top", legend = c(" ", " "),
+                      text.width = strwidth("Left + Right = Total"),
+                      xjust = 0.5, yjust = 0.5,
+                      title = "Nb of Cells", cex=0.7, bty="n")
+  
+  
+  
+  # Add density contour
+  for(MarkerI in 1:nlevels(OutputDataI$Marker_Name)){
+    Marker_NameI<-levels(OutputDataI$Marker_Name)[MarkerI]
+    OutputDataI_MarkerI<-OutputDataI[OutputDataI$Marker_Name==Marker_NameI,]
+    Density_OutputDataI_MarkerI<-kde2d(OutputDataI_MarkerI$X_Scaled, OutputDataI_MarkerI$Y_Scaled, n=100, lims=c(-1.5,1.5,-1.5,1.5))
+    Normalized_Density_OutputDataI_MarkerI<-Density_OutputDataI_MarkerI
+    Normalized_Density_OutputDataI_MarkerI$z<- ((Density_OutputDataI_MarkerI$z-min(Density_OutputDataI_MarkerI$z))/(max(Density_OutputDataI_MarkerI$z)-min(Density_OutputDataI_MarkerI$z)))
+    contour(Normalized_Density_OutputDataI_MarkerI,
+            xlim=c(-Xlim,Xlim), ylim=c(-Ylim,Ylim),
+            xaxp=c(-Xlim,Xlim,4),   yaxp=c(-Ylim,Ylim,4), 
+            add = TRUE, drawlabels = FALSE,
+            lty=1, lwd=1,
+            col=palette()[OutputDataI_MarkerI$Marker_Name],
+            zlim = c(0,1), nlevels = 20, bty="n") # add the contours
+    
+    
+    
+    
+    
+    
+    LeftCountsPerImage_MarkerI<-c()
+    RightCountsPerImage_MarkerI<-c()
+    for(ImageI in 1:length(levels(OutputDataI$File_ID))){
+      Image_IDI<-levels(OutputDataI$File_ID)[ImageI]
+      DataImageI<-OutputDataI[OutputDataI$File_ID==Image_IDI,]
+      LeftDataImageI<-DataImageI[DataImageI$X_Scaled<0,]
+      RightDataImageI<-DataImageI[DataImageI$X_Scaled>=0,]
+      LeftDataImageI_MarkerI<-LeftDataImageI[LeftDataImageI$Marker_Name==Marker_NameI,]
+      RightDataImageI_MarkerI<-RightDataImageI[RightDataImageI$Marker_Name==Marker_NameI,]
+      LeftCountsPerImage_MarkerI<-c(LeftCountsPerImage_MarkerI,dim(LeftDataImageI_MarkerI)[1])
+      RightCountsPerImage_MarkerI<-c(RightCountsPerImage_MarkerI,dim(RightDataImageI_MarkerI)[1])
+    }
+    NbImages<-length(levels(OutputDataI$File_ID))
+    TotalCountOutputDataI_MarkerI<-dim(OutputDataI_MarkerI)[1]
+    LeftCountOutputDataI_MarkerI<-dim(OutputDataI_MarkerI[OutputDataI_MarkerI$X_Scaled<0,])[1]
+    RightCountOutputDataI_MarkerI<-dim(OutputDataI_MarkerI[OutputDataI_MarkerI$X_Scaled>=0,])[1]
+    
+    
+    text(LegendTop$rect$left + LegendTop$rect$w/2, LegendTop$text$y,
+         c("Left + Right = Total",""), cex=0.7)
+    text(LegendTop$rect$left + LegendTop$rect$w/2, LegendTop$text$y,
+         c("",paste0(LeftCountOutputDataI_MarkerI," + ",RightCountOutputDataI_MarkerI," = ",TotalCountOutputDataI_MarkerI)),
+         cex=0.7)
+    
+    LegendLeft <- legend("topleft", legend = c(" "),
+                         xjust =0, yjust = 0,
+                         title = "Avg Cell/Section (+/- SD) ; n Sections", cex=0.7, bty="n")
+    
+    text(LegendLeft$rect$left + LegendLeft$rect$w/2, LegendLeft$text$y,
+         c( paste0(signif(mean(LeftCountsPerImage_MarkerI),3)," (+/- ",signif(sd(LeftCountsPerImage_MarkerI),3),") ; n = ",length(LeftCountsPerImage_MarkerI))),
+         cex=0.7)
+    
+    LegendRight <- legend("topright", legend = c(" "),
+                          xjust =0, yjust = 0,
+                          title = "Avg Cell/Section (+/- SD) ; n Sections", cex=0.7, bty="n")
+    
+    text(LegendRight$rect$left + LegendRight$rect$w/2, LegendRight$text$y,
+         c( paste0(signif(mean(RightCountsPerImage_MarkerI),3)," (+/- ",signif(sd(RightCountsPerImage_MarkerI),3),") ; n = ",length(RightCountsPerImage_MarkerI))),
+         cex=0.7)
+  }
+  abline(v=0, col="grey", lwd=0.5)
+  abline(h=0, col="grey", lwd=0.5)
+  legend("bottomright", title="Marker Density",
+         legend=unique(OutputDataI$Marker_Name), bty="n",
+         col=1:length(OutputDataI$Marker_Name),
+         lty=1, lwd=1,cex=0.5)
+  dev.off() # Close and save the graph
+  
+  
+  # Plot the filled normalized density for each Marker
+  for(MarkerI in 1:nlevels(OutputDataI$Marker_Name)){
+    Marker_NameI<-levels(OutputDataI$Marker_Name)[MarkerI]
+    OutputDataI_MarkerI<-OutputDataI[OutputDataI$Marker_Name==Marker_NameI,]
+    Density_OutputDataI_MarkerI<-kde2d(OutputDataI_MarkerI$X_Scaled, OutputDataI_MarkerI$Y_Scaled, n=100, lims=c(-1.5,1.5,-1.5,1.5))
+    Normalized_Density_OutputDataI_MarkerI<-Density_OutputDataI_MarkerI
+    Normalized_Density_OutputDataI_MarkerI$z<- ((Density_OutputDataI_MarkerI$z-min(Density_OutputDataI_MarkerI$z))/(max(Density_OutputDataI_MarkerI$z)-min(Density_OutputDataI_MarkerI$z)))
+    cairo_pdf(file.path(OutputDirPath, "Graphs by Subject","Density Normalized", paste0(Subject_IDI,"_", Marker_NameI,"_Normalized_Density_Graph.pdf"))) # Open the graph as pdf
+    Xlim=round(max(abs(c(mean(OutputDataI$LE_L_X_Scaled),mean(OutputDataI$LE_R_X_Scaled),max(abs(OutputDataI$X_Scaled))))),2)
+    Ylim=round(max(abs(c(mean(OutputDataI$DE_L_Y_Scaled),mean(OutputDataI$DE_R_Y_Scaled),mean(OutputDataI$VE_L_Y_Scaled),mean(OutputDataI$VE_R_Y_Scaled), max(abs(OutputDataI$Y_Scaled))))),2)
+    
+    
+    
+    
+    LeftCountsPerImage_MarkerI<-c()
+    RightCountsPerImage_MarkerI<-c()
+    for(ImageI in 1:length(levels(OutputDataI$File_ID))){
+      Image_IDI<-levels(OutputDataI$File_ID)[ImageI]
+      DataImageI<-OutputDataI[OutputDataI$File_ID==Image_IDI,]
+      LeftDataImageI<-DataImageI[DataImageI$X_Scaled<0,]
+      RightDataImageI<-DataImageI[DataImageI$X_Scaled>=0,]
+      LeftDataImageI_MarkerI<-LeftDataImageI[LeftDataImageI$Marker_Name==Marker_NameI,]
+      RightDataImageI_MarkerI<-RightDataImageI[RightDataImageI$Marker_Name==Marker_NameI,]
+      LeftCountsPerImage_MarkerI<-c(LeftCountsPerImage_MarkerI,dim(LeftDataImageI_MarkerI)[1])
+      RightCountsPerImage_MarkerI<-c(RightCountsPerImage_MarkerI,dim(RightDataImageI_MarkerI)[1])
+    }
+    NbImages<-length(levels(OutputDataI$File_ID))
+    TotalCountOutputDataI_MarkerI<-dim(OutputDataI_MarkerI)[1]
+    LeftCountOutputDataI_MarkerI<-dim(OutputDataI_MarkerI[OutputDataI_MarkerI$X_Scaled<0,])[1]
+    RightCountOutputDataI_MarkerI<-dim(OutputDataI_MarkerI[OutputDataI_MarkerI$X_Scaled>=0,])[1]
+    
+    par(xpd=TRUE)
+    filled.contour(Normalized_Density_OutputDataI_MarkerI,
+                   xlim=c(-Xlim,Xlim), ylim=c(-Ylim,Ylim), zlim = c(0,1),
+                   nlevels = 21, col=c("#FFFFFF", heat.colors(20)),
+                   plot.title={
+                     title(main=paste0(Subject_IDI," ", Marker_NameI),
+                           ylab="Relative position to CC",
+                           xlab="Relative position to CC");
+                     
+                     
+                     LegendLeft <- legend("topleft", legend = c(" "),inset=c(-0,-0.075),
+                                          xjust =0, yjust = 0,
+                                          title = "Avg Cell/Section (+/- SD) ; n Sections", cex=0.7, bty="n");
+                     
+                     text(LegendLeft$rect$left + LegendLeft$rect$w/2, LegendLeft$text$y,
+                          c( paste0(signif(mean(LeftCountsPerImage_MarkerI),3)," (+/- ",signif(sd(LeftCountsPerImage_MarkerI),3),") ; n = ",length(LeftCountsPerImage_MarkerI))),
+                          cex=0.7);
+                     
+                     LegendRight <- legend("topright", legend = c(" "),inset=c(-0,-0.075),
+                                           xjust =0, yjust = 0,
+                                           title = "Avg Cell/Section (+/- SD) ; n Sections", cex=0.7, bty="n");
+                     
+                     text(LegendRight$rect$left + LegendRight$rect$w/2, LegendRight$text$y,
+                          c( paste0(signif(mean(RightCountsPerImage_MarkerI),3)," (+/- ",signif(sd(RightCountsPerImage_MarkerI),3),") ; n = ",length(RightCountsPerImage_MarkerI))),
+                          cex=0.7);
+                     
+                     LegendBottom <- legend("bottom", legend = c(" ", " "),
+                                            text.width = strwidth("Left + Right = Total"),
+                                            xjust = 0.5, yjust = 0.5,
+                                            title = "Nb of Cells", cex=0.7, bty="n");
+                     text(LegendBottom$rect$left + LegendBottom$rect$w/2, LegendBottom$text$y,
+                          c("Left + Right = Total",""), cex=0.7);
+                     text(LegendBottom$rect$left + LegendBottom$rect$w/2, LegendBottom$text$y,
+                          c("",paste0(LeftCountOutputDataI_MarkerI," + ",RightCountOutputDataI_MarkerI," = ",TotalCountOutputDataI_MarkerI)),
+                          cex=0.7);
+                     legend("bottomleft", title="Marker",
+                            legend=unique(OutputDataI_MarkerI$Marker_Name),bty="n",
+                            col=1:length(OutputDataI_MarkerI$Marker_Name),
+                            pch=1, cex=0.5)
+                     
+                   },
+                   key.title=title(main = "Normalized\nCell Density", sub=Marker_NameI, cex.main=0.7, cex.sub=0.7),
+                   frame.plot=FALSE, axes=TRUE,
+                   key.axes=axis(4,seq(0,1,by=0.2)),
+                   plot.axes = {axis(1); axis(2);
+                     abline(v=0, col="grey", lwd=0.5);
+                     abline(h=0, col="grey", lwd=0.5);
+                     points(OutputDataI_MarkerI$X_Scaled, OutputDataI_MarkerI$Y_Scaled,
+                            pch=1,lwd=0.5, cex=0.5,
+                            col=OutputDataI$Marker_Name
+                     )
+                   }
+    )
+    
+    
+    
+  }
+  
+  dev.off()
+  
+  
+  #Check for normality in both X and Y
+  OutputDataI_MarkerI_NormTest_X<-shapiro.test(OutputDataI_MarkerI$X_Scaled)
+  OutputDataI_MarkerI_NormTest_Y<-shapiro.test(OutputDataI_MarkerI$Y_Scaled)
+  
+  if(OutputDataI_MarkerI_NormTest_X$p.value<0.01){
+    # Data is not normally distributed
+    # Get the number of modalities
+    hist(OutputDataI_MarkerI$X_Scaled,
+         probability = FALSE, # In stead of frequency
+         breaks = "FD", main=paste0(Subject_IDI," ",Marker_NameI," X Coord Distrib"), xlab="X Coordinnates")
+    lines(density(OutputDataI_MarkerI$X_Scaled),   # Add the kernel density estimate (-.5 fix for the bins)
+          col = "firebrick2", lwd = 3)
+  }
+  
+  if(OutputDataI_MarkerI_NormTest_Y$p.value<0.01){
+    # Data is not normally distributed
+    # Get the number of modalities
+    hist(OutputDataI_MarkerI$Y_Scaled,
+         probability = FALSE, # In stead of frequency
+         breaks = "FD", main=paste0(Subject_IDI," ",Marker_NameI,"Y Coord Distrib"), xlab="Y Coordinnates")
+    lines(density(OutputDataI_MarkerI$Y_Scaled),   # Add the kernel density estimate (-.5 fix for the bins)
+          col = "firebrick2", lwd = 3)
+  }
+  
+}
+
+
 # # Plot By Group ----------------------------------------------------
-# 
+
+# Subset the data into control and test
+OutputData$Group<-as.factor(OutputData$Group)
+
+for(GroupI in 1:nlevels(OutputData$Group)){
+  Group_NameI<-levels(OutputData$Group)[GroupI]
+  Data_GroupI<-OutputData[OutputData$Group==Group_NameI,]
+  write.table(Data_GroupI, file=file.path(OutputDirPath, "Tables by Group",paste0(Group_NameI,"_Data.csv")), row.names=FALSE, sep = ",")
+  assign(paste0(as.name(Group_NameI),"Data"), Data_GroupI)
+}
+
+
+
+
+#Calculate the density limits are slightly above the normalized size limit
+Density.Control<-kde2d(ControlData$X.Scaled, ControlData$Y.Scaled, n=100, lims=c(-1.5,1.5,-1.5,1.5))
+write.table(Density.Control, file=file.path(OutputDirPath, "Tables","Density Control Data.csv"), row.names=FALSE, sep = ",")
+
+Density.Test<-kde2d(TestData$X.Scaled, TestData$Y.Scaled, n=100, lims=c(-1.5,1.5,-1.5,1.5))
+write.table(Density.Test, file=file.path(OutputDirPath, "Tables","Density Capsaicin Data.csv"), row.names=FALSE, sep = ",")
+
+image(Density.Control, zlim=c(0.3,2))
+#persp(Density.Control, phi = 30, theta = 10, d = 1)
+#Plot the groups into one graphs
+contour(Density.Control, add = FALSE, drawlabels = FALSE, col="deepskyblue",xlim=c(-1.2,1.2), ylim=c(-1.2,1.2), zlim = c(0, 1), nlevels = 10, bty="n") # add the contours
+contour(Density.Test, add = TRUE, drawlabels = FALSE, col="red",zlim = c(0, 1), nlevels = 10) # add the contours
+abline(v=0, col="grey", lwd=0.5)
+abline(h=0, col="grey", lwd=0.5)
+
+# Plot
+plot(ControlData$X.Scaled, ControlData$Y.Scaled, type="p", xlim=c(-1.2,1.2), ylim=c(-1.2,1.2), pch=16, col="deepskyblue")
+points(TestData$X.Scaled, TestData$Y.Scaled, type="p", xlim=c(-1.2,1.2), ylim=c(-1.2,1.2), pch=16, col="red" )
+
+
+
 # 
 # 
 # 
@@ -1096,3 +1387,517 @@ for (SubjectI in 1:nlevels(OutputData$Subject_ID)){
 # 
 # Test=hotelling.test(JustScaledCoordinates[JustScaledCoordinates$Group=="Control",-1], JustScaledCoordinates[JustScaledCoordinates$Group=="Test",-1], perm = TRUE ,progBar = TRUE,B=1000, shrinkage = TRUE)
 # Test$results
+
+
+
+# 
+# 
+# OutputData$Group<-as.factor(as.character(OutputData$Group))
+# OutputData$File_ID<-as.factor(OutputData$File_ID)
+# 
+# # Subset the data into control and test
+# ControlData<-OutputData[OutputData$Group=="Control",]
+# write.table(ControlData, file=file.path(OutputDirPath, "Tables","Control Data.csv"), row.names=FALSE, sep = ",")
+# MetaDataControl<-MetaData[MetaData$Group=="Control",]
+# SummaryTableControl<-as.data.frame(table(ControlData$X.Scaled))
+# SummaryTableControl$Var1<- as.numeric(as.character(SummaryTableControl$Var1))
+# SummaryControlLeft<-SummaryTableControl[SummaryTableControl$Var1<0,]
+# SummaryControlRight<-SummaryTableControl[SummaryTableControl$Var1>=0,]
+# 
+# 
+# 
+# 
+# 
+# 
+# TestData<-OutputData[OutputData$Group=="Test",]
+# write.table(TestData, file=file.path(OutputDirPath, "Tables","Test Data.csv"), row.names=FALSE, sep = ",")
+# MetaDataTest<-MetaData[MetaData$Group=="Test",]
+# 
+# SummaryTableTest<-as.data.frame(table(TestData$X.Scaled))
+# SummaryTableTest$Var1<- as.numeric(as.character(SummaryTableTest$Var1))
+# SummaryTestLeft<-SummaryTableTest[SummaryTableTest$Var1<0,]
+# SummaryTestRight<-SummaryTableTest[SummaryTableTest$Var1>=0,]
+# 
+# 
+# 
+# cairo_pdf(file.path(OutputDirPath, "Graphs", paste0("Control_Pixel_Centered_Graph.pdf"))) # Open the graph as pdf
+# plot(ControlData$X.Pixel.Centered, ControlData$Y.Pixel.Centered,
+#      pch=1, cex=0.5,
+#      bty="n",
+#      #yaxt="n",
+#      #xaxp=c(0,600,3),
+#      ylim=c(-2000,2000),
+#      xlim=c(-2000,2000),
+#      type="p", col="deepskyblue",
+#      main="Control_Centered_Graph", ylab="Relative position to CC", xlab="Relative position to CC", lwd=1)
+# 
+# legend("topleft",
+#        paste0("Total Left: ",round(sum(SummaryControlLeft$Freq))),
+#        text.col=c("blue"),
+#        inset = .0,
+#        bty="n",
+#        cex=0.75,
+#        y.intersp=1.4) # Add legend
+# legend("topright",
+#        paste0("Total Right: ",round(sum(SummaryControlRight$Freq))),
+#        text.col=c("red"),
+#        inset = .0,
+#        bty="n",
+#        cex=0.75,
+#        y.intersp=1.4) # Add legend
+# 
+# points(MetaDataControl$CC_X.Pixel.Centered,MetaDataControl$CC_Y.Pixel.Centered, col="black", pch=3, cex=0.5)
+# points(MetaDataControl$DE_R_X.Pixel.Centered,MetaDataControl$DE_R_Y.Pixel.Centered, col="black", pch=3, cex=0.5)
+# points(MetaDataControl$LE_R_X.Pixel.Centered,MetaDataControl$LE_R_Y.Pixel.Centered, col="black", pch=3, cex=0.5)
+# points(MetaDataControl$VE_R_X.Pixel.Centered,MetaDataControl$VE_R_Y.Pixel.Centered, col="black", pch=3, cex=0.5)
+# points(MetaDataControl$DE_L_X.Pixel.Centered,MetaDataControl$DE_L_Y.Pixel.Centered, col="black", pch=3, cex=0.5)
+# points(MetaDataControl$LE_L_X.Pixel.Centered,MetaDataControl$LE_L_Y.Pixel.Centered, col="black", pch=3, cex=0.5)
+# points(MetaDataControl$VE_L_X.Pixel.Centered,MetaDataControl$VE_L_Y.Pixel.Centered, col="black", pch=3, cex=0.5)
+# 
+# dev.off() # Close and save the graph
+# 
+# 
+# 
+# 
+# 
+# 
+# 
+# 
+# 
+# cairo_pdf(file.path(OutputDirPath, "Graphs", paste0("Control_Scaled_Graph.pdf"))) # Open the graph as pdf
+# plot(ControlData$X.Scaled, ControlData$Y.Scaled,
+#      pch=1, cex=0.5,
+#      bty="n",
+#      #yaxt="n",
+#      #xaxp=c(0,600,3),
+#      ylim=c(-1,1),
+#      xlim=c(-1,1),
+#      type="p", col="deepskyblue",
+#      main="Control_Scaled_Graph", ylab="Relative position to CC", xlab="Relative position to CC", lwd=1)
+# 
+# legend("topleft",
+#        paste0("Total Left: ",round(sum(SummaryControlLeft$Freq))),
+#        text.col=c("blue"),
+#        inset = .0,
+#        bty="n",
+#        cex=0.75,
+#        y.intersp=1.4) # Add legend
+# legend("topright",
+#        paste0("Total Right: ",round(sum(SummaryControlRight$Freq))),
+#        text.col=c("red"),
+#        inset = .0,
+#        bty="n",
+#        cex=0.75,
+#        y.intersp=1.4) # Add legend
+# points(MetaDataControl$CC_X.Scaled,MetaDataControl$CC_Y.Scaled, col="black", pch=3, cex=0.5)
+# points(MetaDataControl$DE_R_X.Scaled,MetaDataControl$DE_R_Y.Scaled, col="black", pch=3, cex=0.5)
+# points(MetaDataControl$LE_R_X.Scaled,MetaDataControl$LE_R_Y.Scaled, col="black", pch=3, cex=0.5)
+# points(MetaDataControl$VE_R_X.Scaled,MetaDataControl$VE_R_Y.Scaled, col="black", pch=3, cex=0.5)
+# points(MetaDataControl$DE_L_X.Scaled,MetaDataControl$DE_L_Y.Scaled, col="black", pch=3, cex=0.5)
+# points(MetaDataControl$LE_L_X.Scaled,MetaDataControl$LE_L_Y.Scaled, col="black", pch=3, cex=0.5)
+# points(MetaDataControl$VE_L_X.Scaled,MetaDataControl$VE_L_Y.Scaled, col="black", pch=3, cex=0.5)
+# points(mean(ControlData$X.Scaled[ControlData$X.Scaled<0]),mean(ControlData$Y.Scaled[ControlData$X.Scaled<0]) , col="deepskyblue4", pch=3, cex=1, lwd=2)
+# points(mean(ControlData$X.Scaled[ControlData$X.Scaled>0]),mean(ControlData$Y.Scaled[ControlData$X.Scaled>=0]) , col="deepskyblue4", pch=3, cex=1, lwd=2)
+# 
+# dev.off() # Close and save the graph
+# 
+# 
+# 
+# 
+# 
+# 
+# cairo_pdf(file.path(OutputDirPath, "Graphs", paste0("Test_Pixel_Centered_Graph.pdf"))) # Open the graph as pdf
+# plot(TestData$X.Pixel.Centered, TestData$Y.Pixel.Centered,
+#      pch=1, cex=0.5,
+#      bty="n",
+#      #yaxt="n",
+#      #xaxp=c(0,600,3),
+#      ylim=c(-2000,2000),
+#      xlim=c(-2000,2000),
+#      type="p", col="red",
+#      main="Test_Centered_Graph", ylab="Relative position to CC", xlab="Relative position to CC", lwd=1)
+# 
+# 
+# legend("topleft",
+#        paste0("Total Left: ",round(sum(SummaryTestLeft$Freq))),
+#        text.col=c("blue"),
+#        inset = .0,
+#        bty="n",
+#        cex=0.75,
+#        y.intersp=1.4) # Add legend
+# legend("topright",
+#        paste0("Total Right: ",round(sum(SummaryTestRight$Freq))),
+#        text.col=c("red"),
+#        inset = .0,
+#        bty="n",
+#        cex=0.75,
+#        y.intersp=1.4) # Add legend
+# 
+# 
+# points(MetaDataTest$CC_X.Pixel.Centered,MetaDataTest$CC_Y.Pixel.Centered, col="black", pch=3, cex=0.5)
+# points(MetaDataTest$DE_R_X.Pixel.Centered,MetaDataTest$DE_R_Y.Pixel.Centered, col="black", pch=3, cex=0.5)
+# points(MetaDataTest$LE_R_X.Pixel.Centered,MetaDataTest$LE_R_Y.Pixel.Centered, col="black", pch=3, cex=0.5)
+# points(MetaDataTest$VE_R_X.Pixel.Centered,MetaDataTest$VE_R_Y.Pixel.Centered, col="black", pch=3, cex=0.5)
+# points(MetaDataTest$DE_L_X.Pixel.Centered,MetaDataTest$DE_L_Y.Pixel.Centered, col="black", pch=3, cex=0.5)
+# points(MetaDataTest$LE_L_X.Pixel.Centered,MetaDataTest$LE_L_Y.Pixel.Centered, col="black", pch=3, cex=0.5)
+# points(MetaDataTest$VE_L_X.Pixel.Centered,MetaDataTest$VE_L_Y.Pixel.Centered, col="black", pch=3, cex=0.5)
+# 
+# 
+# 
+# dev.off() # Close and save the graph
+# 
+# 
+# 
+# 
+# 
+# cairo_pdf(file.path(OutputDirPath, "Graphs", paste0("Test_Scaled_Graph.pdf"))) # Open the graph as pdf
+# plot(TestData$X.Scaled, TestData$Y.Scaled,
+#      pch=1, cex=0.5,
+#      bty="n",
+#      #yaxt="n",
+#      #xaxp=c(0,600,3),
+#      ylim=c(-1,1),
+#      xlim=c(-1,1),
+#      type="p", col="red",
+#      main="Test_Scaled_Graph", ylab="Relative position to CC", xlab="Relative position to CC", lwd=1)
+# 
+# 
+# legend("topleft",
+#        paste0("Total Left: ",round(sum(SummaryTestLeft$Freq))),
+#        text.col=c("blue"),
+#        inset = .0,
+#        bty="n",
+#        cex=0.75,
+#        y.intersp=1.4) # Add legend
+# legend("topright",
+#        paste0("Total Right: ",round(sum(SummaryTestRight$Freq))),
+#        text.col=c("red"),
+#        inset = .0,
+#        bty="n",
+#        cex=0.75,
+#        y.intersp=1.4) # Add legend
+# points(MetaDataTest$CC_X.Scaled,MetaDataTest$CC_Y.Scaled, col="black", pch=3, cex=0.5)
+# points(MetaDataTest$DE_R_X.Scaled,MetaDataTest$DE_R_Y.Scaled, col="black", pch=3, cex=0.5)
+# points(MetaDataTest$LE_R_X.Scaled,MetaDataTest$LE_R_Y.Scaled, col="black", pch=3, cex=0.5)
+# points(MetaDataTest$VE_R_X.Scaled,MetaDataTest$VE_R_Y.Scaled, col="black", pch=3, cex=0.5)
+# points(MetaDataTest$DE_L_X.Scaled,MetaDataTest$DE_L_Y.Scaled, col="black", pch=3, cex=0.5)
+# points(MetaDataTest$LE_L_X.Scaled,MetaDataTest$LE_L_Y.Scaled, col="black", pch=3, cex=0.5)
+# points(MetaDataTest$VE_L_X.Scaled,MetaDataTest$VE_L_Y.Scaled, col="black", pch=3, cex=0.5)
+# points(mean(TestData$X.Scaled[TestData$X.Scaled<0]),mean(TestData$Y.Scaled[TestData$X.Scaled<0]) , col="red4", pch=3, cex=1, lwd=2)
+# points(mean(TestData$X.Scaled[TestData$X.Scaled>0]),mean(TestData$Y.Scaled[TestData$X.Scaled>=0]) , col="red4", pch=3, cex=1, lwd=2)
+# 
+# dev.off() # Close and save the graph
+# 
+# 
+# 
+# 
+# 
+# NbOfBin=100
+# 
+# 
+# 
+# # Use Bandwidth.nrd as a default
+# Density.Total<-kde2d(OutputData$X.Scaled, OutputData$Y.Scaled, h=c(bandwidth.nrd(OutputData$X.Scaled),bandwidth.nrd(OutputData$Y.Scaled)), n=NbOfBin, lims=c(-1.2,1.2,-1.2,1.2))
+# write.table(Density.Total, file=file.path(OutputDirPath, "Tables","Density_Total.csv"), row.names=FALSE, sep = ",")
+# #Alternative use width.SJ() for defining the h
+# #Density.Total.ScaledSJ<-kde2d(OutputData$X.Scaled, OutputData$Y.Scaled, h=c(width.SJ(OutputData$X.Scaled),width.SJ(OutputData$Y.Scaled)), n=100, lims=c(-1.2,1.2,-1.2,1.2))
+# 
+# Density.Total.Norm<-Density.Total
+# Density.Total.Norm$z<- round(  100*scale(  Density.Total$z, center=FALSE, scale=rep(      max(        Density.Total$z        ), dim(Density.Total$z)[2]      )    )   )
+# write.table(Density.Total.Norm, file=file.path(OutputDirPath, "Tables","Density_Total_Norm.csv"), row.names=FALSE, sep = ",")
+# cairo_pdf(file.path(OutputDirPath, "Graphs", paste0("Density_Total_Norm.pdf"))) # Open the graph as pdf
+# filled.contour(Density.Total.Norm, main="Density.Total.Norm",
+#                levels=seq(0,max(c(Density.Total.Norm$z)), by=2),
+#                col= c("white", heat.colors(length(seq(0,max(c(Density.Total.Norm$z)), by=2))-1)) ,
+#                frame.plot=FALSE)
+# dev.off()
+# 
+# Density.Control<-kde2d(ControlData$X.Scaled, ControlData$Y.Scaled, h=c(bandwidth.nrd(ControlData$X.Scaled),bandwidth.nrd(ControlData$Y.Scaled)), n=NbOfBin, lims=c(-1.2,1.2,-1.2,1.2))
+# write.table(Density.Control, file=file.path(OutputDirPath, "Tables","Density_Control.csv"), row.names=FALSE, sep = ",")
+# 
+# Density.Control.Norm<-Density.Control
+# Density.Control.Norm$z<- round(  100*scale(  Density.Control$z, center=FALSE, scale=rep(      max(        Density.Control$z        ), dim(Density.Control$z)[2]      )    )   )
+# write.table(Density.Control.Norm, file=file.path(OutputDirPath, "Tables","Density_Control_Norm.csv"), row.names=FALSE, sep = ",")
+# 
+# cairo_pdf(file.path(OutputDirPath, "Graphs", paste0("Density_Control_Norm.pdf"))) # Open the graph as pdf
+# filled.contour(Density.Control.Norm, main="Density.Control.Norm",
+#                levels=seq(0,max(c(Density.Control.Norm$z)), by=2),
+#                col= c("white", heat.colors(length(seq(0,max(c(Density.Control.Norm$z)), by=2))-1)) ,
+#                frame.plot=FALSE)
+# dev.off()
+# 
+# Density.Test<-kde2d(TestData$X.Scaled, TestData$Y.Scaled, h=c(bandwidth.nrd(TestData$X.Scaled),bandwidth.nrd(TestData$Y.Scaled)), n=NbOfBin, lims=c(-1.2,1.2,-1.2,1.2))
+# write.table(Density.Test, file=file.path(OutputDirPath, "Tables","Density_Test.csv"), row.names=FALSE, sep = ",")
+# 
+# Density.Test.Norm<-Density.Test
+# Density.Test.Norm$z<- round(  100*scale(  Density.Test$z, center=FALSE, scale=rep(      max(        Density.Test$z        ), dim(Density.Test$z)[2]      )    )   )
+# write.table(Density.Test.Norm, file=file.path(OutputDirPath, "Tables","Density_Test_Norm.csv"), row.names=FALSE, sep = ",")
+# cairo_pdf(file.path(OutputDirPath, "Graphs", paste0("Density_Test_Norm.pdf"))) # Open the graph as pdf
+# filled.contour(Density.Test.Norm, main="Density.Test.Norm",
+#                levels=seq(0,max(c(Density.Test.Norm$z)), by=2),
+#                col= c("white", heat.colors(length(seq(0,max(c(Density.Test.Norm$z)), by=2))-1)) ,
+#                frame.plot=FALSE)
+# dev.off()
+# 
+# 
+# #PLOT WEIGHTED DATA
+# Density.Control.Weighted<-Density.Control.Norm
+# Density.Control.Weighted$z<-Density.Control.Norm$z * (dim(ControlData)[1])/100
+# write.table(Density.Control.Weighted, file=file.path(OutputDirPath, "Tables","Density_Control_Weighted.csv"), row.names=FALSE, sep = ",")
+# Density.Test.Weighted<-Density.Test.Norm
+# Density.Test.Weighted$z<-Density.Test.Norm$z * (dim(TestData)[1])/100
+# write.table(Density.Test.Weighted, file=file.path(OutputDirPath, "Tables","Density_Test_Weighted.csv"), row.names=FALSE, sep = ",")
+# 
+# cairo_pdf(file.path(OutputDirPath, "Graphs", paste0("Density_Control_Weighted.pdf"))) # Open the graph as pdf
+# filled.contour(Density.Control.Weighted,
+#                col= c("white", heat.colors(length(seq(0,max(c(Density.Control.Weighted$z, Density.Test.Weighted$z)), by=20))-1)) ,
+#                main="Density.Control.Weighted",
+#                zlim=c(0,max(c(Density.Control.Weighted$z, Density.Test.Weighted$z))),
+#                levels=seq(0,max(c(Density.Control.Weighted$z,  Density.Test.Weighted$z)), by=20),frame.plot=FALSE)
+# dev.off()
+# 
+# 
+# 
+# 
+# cairo_pdf(file.path(OutputDirPath, "Graphs", paste0("Density_Test_Weighted.pdf"))) # Open the graph as pdf
+# filled.contour(Density.Test.Weighted,
+#                col= c("white", heat.colors(length(seq(0,max(c(Density.Control.Weighted$z, Density.Test.Weighted$z)), by=20))-1)) ,
+#                main="Density.Test.Weighted",
+#                zlim=c(0,max(c(Density.Control.Weighted$z,Density.Test.Weighted$z))),
+#                levels=seq(0,max(c(Density.Control.Weighted$z,Density.Test.Weighted$z)), by=20),frame.plot=FALSE)
+# 
+# dev.off()
+# 
+# 
+# 
+# 
+# cairo_pdf(file.path(OutputDirPath, "Graphs", paste0("Contour_Density_Control_vs_Test.pdf"))) # Open the graph as pdf
+# contour(Density.Control.Weighted, col="deepskyblue",labcex =0.5, drawlabels=TRUE, method="edge", zlim=c(0,max(c(Density.Control.Weighted$z,Density.Test.Weighted$z))), levels=seq(0,max(c(Density.Control.Weighted$z,Density.Test.Weighted$z)), by=50),frame.plot=FALSE, lty="solid",lwd=1)
+# contour(Density.Test.Weighted, col="red",add = TRUE, zlim=c(0,max(c(Density.Control.Weighted$z,Density.Test.Weighted$z))),levels=seq(0,max(c(Density.Control.Weighted$z,Density.Test.Weighted$z)), by=50),
+#         labels=NULL, labcex =0.5, drawlabels=TRUE, method="edge", lty="solid", lwd=1)
+# title("Space Normalized density of cFos expressing cells following\nunilateral (Right hindpaw) Capsaicin injection", font = 1)
+# 
+# legend("topleft",
+#        paste0("Total Left"),
+#        text.col=c("black"),
+#        inset = .0,
+#        bty="n",
+#        cex=0.75,
+#        y.intersp=1.4) # Add legend
+# legend("topleft",
+#        paste0("\nControl ",round(sum(SummaryControlLeft$Freq))),
+#        text.col=c("deepskyblue"),
+#        inset = .0,
+#        bty="n",
+#        cex=0.75,
+#        y.intersp=1.4) # Add legend
+# 
+# legend("topleft",
+#        paste0("\n \nTest ",round(sum(SummaryTestLeft$Freq))),
+#        text.col=c("red"),
+#        inset = .0,
+#        bty="n",
+#        cex=0.75,
+#        y.intersp=1.4) # Add legend
+# 
+# 
+# legend("topright",
+#        paste0("Total Right"),
+#        text.col=c("black"),
+#        inset = .0,
+#        bty="n",
+#        cex=0.75,
+#        y.intersp=1.4) # Add legend
+# 
+# legend("topright",
+#        paste0("\nControl ",round(sum(SummaryControlRight$Freq))),
+#        text.col=c("deepskyblue"),
+#        inset = .0,
+#        bty="n",
+#        cex=0.75,
+#        y.intersp=1.4) # Add legend
+# 
+# legend("topright",
+#        paste0("\n \nTest ",round(sum(SummaryTestRight$Freq))),
+#        text.col=c("red"),
+#        inset = .0,
+#        bty="n",
+#        cex=0.75,
+#        y.intersp=1.4) # Add legend
+# abline(v=0, col="darkgrey")
+# abline(h=0, col="darkgrey")
+# 
+# points(mean(ControlData$X.Scaled[ControlData$X.Scaled<0]),mean(ControlData$Y.Scaled[ControlData$X.Scaled<0]) , col="deepskyblue4", pch=3, cex=1, lwd=2)
+# points(mean(ControlData$X.Scaled[ControlData$X.Scaled>0]),mean(ControlData$Y.Scaled[ControlData$X.Scaled>=0]) , col="deepskyblue4", pch=3, cex=1, lwd=2)
+# 
+# points(mean(TestData$X.Scaled[TestData$X.Scaled<0]),mean(TestData$Y.Scaled[TestData$X.Scaled<0]) , col="red4", pch=3, cex=1, lwd=2)
+# points(mean(TestData$X.Scaled[TestData$X.Scaled>0]),mean(TestData$Y.Scaled[TestData$X.Scaled>=0]) , col="red4", pch=3, cex=1, lwd=2)
+# 
+# dev.off()
+# 
+# 
+# hist(ControlData$X.Scaled[ControlData$X.Scaled>0])
+# abline(v=mean(ControlData$X.Scaled[ControlData$X.Scaled>0]),col="red")
+# abline(v=mean(ControlData$X.Scaled[ControlData$X.Scaled>0])-2*sd(ControlData$X.Scaled[ControlData$X.Scaled>0]),col="grey")
+# abline(v=mean(ControlData$X.Scaled[ControlData$X.Scaled>0])+2*sd(ControlData$X.Scaled[ControlData$X.Scaled>0]),col="grey")
+# 
+# # To compare the distribution use ks.test()
+# # To test for normal distribution shapiro.test() if p value >0.05 distribution is NOT normal
+# 
+# data1<-TestData$X.Scaled[TestData$X.Scaled>0]
+# data2<-TestData$Y.Scaled[TestData$X.Scaled>0]
+# data3<-ControlData$X.Scaled[ControlData$X.Scaled>0]
+# data4<-ControlData$Y.Scaled[ControlData$X.Scaled>0]
+# data<-data1
+# 
+# boxplot(data)
+# var(data)
+# sd(data)
+# 
+# 
+# 
+# if( shapiro.test(ControlData$Y.Scaled[ControlData$X.Scaled>0])$p.value>0.05){
+#   print("Data is not normally distruted")
+# }
+# shapiro.test(TestData$X.Scaled[TestData$X.Scaled<0])
+# 
+# hist(ControlData$X.Scaled[ControlData$X.Scaled>=0])
+# 
+# hist(ControlData$Y.Scaled[ControlData$X.Scaled>0])
+# 
+# summary(ControlData$X.Scaled[ControlData$X.Scaled>0])
+# sd(ControlData$X.Scaled[ControlData$X.Scaled>0])
+# summary(ControlData$Y.Scaled[ControlData$X.Scaled>0])
+# sd(ControlData$Y.Scaled[ControlData$X.Scaled>0])
+# summary(TestData$X.Scaled[TestData$X.Scaled>0])
+# sd(TestData$X.Scaled[TestData$X.Scaled>0])
+# summary(TestData$Y.Scaled[TestData$X.Scaled>0])
+# sd(TestData$Y.Scaled[TestData$X.Scaled>0])
+# 
+# ### Do the Hoteling test
+# 
+# ## Remove constant variable
+# # To be used as Dataframe<-Dataframe[,-RemoveConstantVariable.Function(Dataframe)]
+# 
+# Density.Control.Weighted.Unique<- data.frame(Density.Control.Weighted$z)
+# Density.Control.Weighted.Unique<- Density.Control.Weighted.Unique[,-RemoveConstantVariable.Function(Density.Control.Weighted.Unique)]
+# 
+# Density.Test.Weighted.Unique<- data.frame(Density.Test.Weighted$z)
+# Density.Test.Weighted.Unique<- Density.Test.Weighted.Unique[,-RemoveConstantVariable.Function(Density.Test.Weighted.Unique)]
+# 
+# fit = hotelling.test(Density.Control.Weighted.Unique, Density.Test.Weighted.Unique)
+# 
+# JustScaledCoordinates<-data.frame("DUMMY"=1:dim(OutputData)[1])
+# JustScaledCoordinates$DUMMY<-NULL
+# JustScaledCoordinates$Group<-OutputData$Group
+# JustScaledCoordinates$X.Scaled<-OutputData$X.Scaled
+# JustScaledCoordinates$Y.Scaled<-OutputData$Y.Scaled
+# 
+# JustScaledCoordinatesLeft<-JustScaledCoordinates[JustScaledCoordinates$X.Scaled<0,]
+# JustScaledCoordinatesRight<-JustScaledCoordinates[JustScaledCoordinates$X.Scaled>=0,]
+# 
+# JustScaledCoordinatesLeftFlippedtoRight<-JustScaledCoordinatesLeft
+# JustScaledCoordinatesLeftFlippedtoRight$X.Scaled<- - JustScaledCoordinatesLeftFlippedtoRight$X.Scaled
+# 
+# ResultControlLeftvsRight=hotelling.test(JustScaledCoordinatesLeftFlippedtoRight[JustScaledCoordinatesLeftFlippedtoRight$Group=="Control",-1], JustScaledCoordinatesRight[JustScaledCoordinatesRight$Group=="Control",-1], perm = TRUE, B=500,progBar = TRUE)
+# ResultControlLeftvsRight
+# 
+# ResultTestLeftvsRight=hotelling.test(JustScaledCoordinatesLeftFlippedtoRight[JustScaledCoordinatesLeftFlippedtoRight$Group=="Test",-1], JustScaledCoordinatesRight[JustScaledCoordinatesRight$Group=="Test",-1], perm = TRUE, B=500,progBar = TRUE)
+# ResultTestLeftvsRight
+# 
+# ResultLeftControlvsTest=hotelling.test(JustScaledCoordinatesLeft[JustScaledCoordinatesLeft$Group=="Control",-1], JustScaledCoordinatesLeft[JustScaledCoordinatesLeft$Group=="Test",-1], perm = TRUE, B=10000,progBar = TRUE)
+# ResultLeftControlvsTest
+# 
+# ResultRightControlvsTest=hotelling.test(JustScaledCoordinatesRight[JustScaledCoordinatesRight$Group=="Control",-1], JustScaledCoordinatesRight[JustScaledCoordinatesRight$Group=="Test",-1], perm = TRUE, B=500,progBar = TRUE)
+# ResultRightControlvsTest
+# 
+# 
+# Test=hotelling.test(JustScaledCoordinates[JustScaledCoordinates$Group=="Control",-1], JustScaledCoordinates[JustScaledCoordinates$Group=="Test",-1], perm = TRUE ,progBar = TRUE,B=1000, shrinkage = TRUE)
+# Test$results
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# Normalized.Density.All<-(Density.All$z-min(Density.All$z))/(max(Density.All$z)-min(Density.All$z))
+# 
+
+
+
+## Make the Weighted Density plot
+
+
+## Look if distribution of X and Y values are normal, bimodal
+## if normal process the Center of mass
+## If multimodal break into n centers of mass
+## Hotelling on each center of mass
+## Compare the number of cells per section 
+## Downsample to 10 sections
+}
+
+# 
+
+
+
+
+
+
+
+
+
+
+
+
+# 
+# 
+# 
+# 
+# #Calculate the density
+# Density.All<-kde2d(MergedInputData$Distance.X, MergedInputData$Distance.Y, n=1000, lims=c(-700,700,-700,700))
+# Normalized.Density.All<-(Density.All$z-min(Density.All$z))/(max(Density.All$z)-min(Density.All$z))
+# 
+# Density.CTBg.All<-kde2d(MergedInputData$Distance.X[MergedInputData$Channel=="CTBg"], MergedInputData$Distance.Y[MergedInputData$Channel=="CTBg"], n=1000, lims=c(-700,700,-700,700))
+# Normalized.Density.CTBg.All<-(Density.CTBg.All$z-min(Density.CTBg.All$z))/(max(Density.CTBg.All$z)-min(Density.CTBg.All$z))
+# 
+# Density.CTBr.All<-kde2d(MergedInputData$Distance.X[MergedInputData$Channel=="CTBr"], MergedInputData$Distance.Y[MergedInputData$Channel=="CTBr"], n=1000, lims=c(-700,700,-700,700))
+# Normalized.Density.CTBr.All<-(Density.CTBr.All$z-min(Density.CTBr.All$z))/(max(Density.CTBr.All$z)-min(Density.CTBr.All$z))
+# 
+# Density.CTBgxNissl<-kde2d(MergedInputData$Distance.X[MergedInputData$Channel=="CTBgxNissl"], MergedInputData$Distance.Y[MergedInputData$Channel=="CTBgxNissl"], n=1000, lims=c(-700,700,-700,700))
+# Normalized.Density.CTBgxNissl<-(Density.CTBgxNissl$z-min(Density.CTBgxNissl$z))/(max(Density.CTBgxNissl$z)-min(Density.CTBgxNissl$z))
+# 
+# Density.CTBrxNissl<-kde2d(MergedInputData$Distance.X[MergedInputData$Channel=="CTBrxNissl"], MergedInputData$Distance.Y[MergedInputData$Channel=="CTBrxNissl"], n=1000, lims=c(-700,700,-700,700))
+# Normalized.Density.CTBrxNissl<-(Density.CTBrxNissl$z-min(Density.CTBrxNissl$z))/(max(Density.CTBrxNissl$z)-min(Density.CTBrxNissl$z))
+# 
+# 
+# 
+# contour(Normalized.Density.All, add = FALSE, drawlabels = FALSE, col="grey",zlim = c(0.3, 1), nlevels = 10,bty="n") # add the contours
+# contour(Normalized.Density.CTBg.All, add = TRUE, drawlabels = FALSE, col="darkgreen",zlim = c(0.7, 1), nlevels = 7) # add the contours
+# contour(Normalized.Density.CTBr.All, add = TRUE, drawlabels = FALSE, col="red",zlim = c(0.8, 1.2), nlevels = 7) # add the contours
+# 
+# contour(Normalized.Density.All, add = FALSE, drawlabels = FALSE, col="grey",zlim = c(0.3, 1), nlevels = 10, bty="n") # add the contours
+# contour(Normalized.Density.CTBgxNissl, add = FALSE, bty="n", drawlabels = FALSE, col="darkgreen",zlim = c(0.6, 1), nlevels = 7) # add the contours
+# contour(Normalized.Density.CTBrxNissl, add = FALSE, bty="n", drawlabels = FALSE, col="red",zlim = c(0.6, 1), nlevels = 7) # add the contours
+# abline(v=0.5, col="grey", lwd=0.5)
+# abline(h=0.5, col="grey", lwd=0.5)
+# 
+# fill(Normalized.Density.All, zlim = c(0.3, 1), col="grey", add=TRUE)
+# image(Normalized.Density.All, zlim = c(0.3, 1), col="lightgrey", add=TRUE, bty="n")
+# contour(Normalized.Density.CTBrxNissl, add = FALSE, bty="n", drawlabels = FALSE, col="red",zlim = c(0.6, 1), nlevels = 7) # add the contours
+# abline(v=0.5, col="grey", lwd=0.5)
+# abline(h=0.5, col="grey", lwd=0.5)
