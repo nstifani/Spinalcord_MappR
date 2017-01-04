@@ -705,7 +705,7 @@ for (SubjectI in 1:nlevels(OutputData$Subject_ID)){
   
   
   
-  
+  par(xpd=TRUE)
   # Plot scaled coordinates and add density
   cairo_pdf(file.path(OutputDirPath, "Graphs by Subject","Density", paste0(Subject_IDI,"_Density_Graph.pdf"))) # Open the graph as pdf
   Xlim=round(max(abs(c(mean(OutputDataI$LE_L_X_Scaled),mean(OutputDataI$LE_R_X_Scaled),max(abs(OutputDataI$X_Scaled))))),2)
@@ -730,12 +730,19 @@ for (SubjectI in 1:nlevels(OutputData$Subject_ID)){
   points(mean(OutputDataI$LE_L_X_Scaled),mean(OutputDataI$LE_L_Y_Scaled), col="black", pch=3, cex=0.5)
   points(mean(OutputDataI$VE_L_X_Scaled),mean(OutputDataI$VE_L_Y_Scaled), col="black", pch=3, cex=0.5)
   
-  LegendTop <- legend("top", legend = c(" ", " "),
+  LegendTop <- legend("top", legend = c(" ", " "),inset=c(0,-0.1),
                       text.width = strwidth("Left + Right = Total"),
                       xjust = 0.5, yjust = 0.5,
                       title = "Nb of Cells", cex=0.7, bty="n")
   
-  
+  text(LegendTop$rect$left + LegendTop$rect$w/2, LegendTop$text$y,
+       c("Left + Right = Total",""), cex=0.5)
+  LegendLeft <- legend("topleft", legend = c(" "),inset=c(0,-0.1),
+                       xjust =0, yjust = 0,
+                       title = "Avg Cell/Section (+/- SD) ; n Sections", cex=0.5, bty="n")
+  LegendRight <- legend("topright", legend = c(" "),inset=c(0,-0.1),
+                        xjust =0, yjust = 0,
+                        title = "Avg Cell/Section (+/- SD) ; n Sections", cex=0.5, bty="n")
   
   # Add density contour
   for(MarkerI in 1:nlevels(OutputDataI$Marker_Name)){
@@ -748,9 +755,9 @@ for (SubjectI in 1:nlevels(OutputData$Subject_ID)){
             xlim=c(-Xlim,Xlim), ylim=c(-Ylim,Ylim),
             xaxp=c(-Xlim,Xlim,4),   yaxp=c(-Ylim,Ylim,4), 
             add = TRUE, drawlabels = FALSE,
-            lty=1, lwd=1,
+            lty=1, lwd=0.5,
             col=palette()[OutputDataI_MarkerI$Marker_Name],
-            zlim = c(0,1), nlevels = 20, bty="n") # add the contours
+            zlim = c(0,1), nlevels = 10, bty="n") # add the contours
     
     
     
@@ -775,27 +782,20 @@ for (SubjectI in 1:nlevels(OutputData$Subject_ID)){
     RightCountOutputDataI_MarkerI<-dim(OutputDataI_MarkerI[OutputDataI_MarkerI$X_Scaled>=0,])[1]
     
     
+ 
     text(LegendTop$rect$left + LegendTop$rect$w/2, LegendTop$text$y,
-         c("Left + Right = Total",""), cex=0.7)
-    text(LegendTop$rect$left + LegendTop$rect$w/2, LegendTop$text$y,
-         c("",paste0(LeftCountOutputDataI_MarkerI," + ",RightCountOutputDataI_MarkerI," = ",TotalCountOutputDataI_MarkerI)),
-         cex=0.7)
+         c(rep("a \n ",MarkerI),paste0(LeftCountOutputDataI_MarkerI," + ",RightCountOutputDataI_MarkerI," = ",TotalCountOutputDataI_MarkerI)),
+         cex=0.5)
     
-    LegendLeft <- legend("topleft", legend = c(" "),
-                         xjust =0, yjust = 0,
-                         title = "Avg Cell/Section (+/- SD) ; n Sections", cex=0.7, bty="n")
-    
+   
     text(LegendLeft$rect$left + LegendLeft$rect$w/2, LegendLeft$text$y,
-         c( paste0(signif(mean(LeftCountsPerImage_MarkerI),3)," (+/- ",signif(sd(LeftCountsPerImage_MarkerI),3),") ; n = ",length(LeftCountsPerImage_MarkerI))),
-         cex=0.7)
+         c( rep(paste0(" \n \n"),MarkerI),paste0(signif(mean(LeftCountsPerImage_MarkerI),3)," (+/- ",signif(sd(LeftCountsPerImage_MarkerI),3),") ; n = ",length(LeftCountsPerImage_MarkerI))),
+         cex=0.5)
     
-    LegendRight <- legend("topright", legend = c(" "),
-                          xjust =0, yjust = 0,
-                          title = "Avg Cell/Section (+/- SD) ; n Sections", cex=0.7, bty="n")
-    
+   
     text(LegendRight$rect$left + LegendRight$rect$w/2, LegendRight$text$y,
-         c( paste0(signif(mean(RightCountsPerImage_MarkerI),3)," (+/- ",signif(sd(RightCountsPerImage_MarkerI),3),") ; n = ",length(RightCountsPerImage_MarkerI))),
-         cex=0.7)
+         c( rep("a \n a",MarkerI), paste0(signif(mean(RightCountsPerImage_MarkerI),3)," (+/- ",signif(sd(RightCountsPerImage_MarkerI),3),") ; n = ",length(RightCountsPerImage_MarkerI))),
+         cex=0.5)
   }
   abline(v=0, col="grey", lwd=0.5)
   abline(h=0, col="grey", lwd=0.5)
@@ -837,7 +837,7 @@ for (SubjectI in 1:nlevels(OutputData$Subject_ID)){
     LeftCountOutputDataI_MarkerI<-dim(OutputDataI_MarkerI[OutputDataI_MarkerI$X_Scaled<0,])[1]
     RightCountOutputDataI_MarkerI<-dim(OutputDataI_MarkerI[OutputDataI_MarkerI$X_Scaled>=0,])[1]
     
-    par(xpd=TRUE)
+   
     filled.contour(Normalized_Density_OutputDataI_MarkerI,
                    xlim=c(-Xlim,Xlim), ylim=c(-Ylim,Ylim), zlim = c(0,1),
                    nlevels = 21, col=c("#FFFFFF", heat.colors(20)),
@@ -917,7 +917,7 @@ for (SubjectI in 1:nlevels(OutputData$Subject_ID)){
     # Get the number of modalities
     hist(OutputDataI_MarkerI$Y_Scaled,
          probability = FALSE, # In stead of frequency
-         breaks = "FD", main=paste0(Subject_IDI," ",Marker_NameI,"Y Coord Distrib"), xlab="Y Coordinnates")
+         breaks = "FD", main=paste0(Subject_IDI," ",Marker_NameI," Y Coord Distrib"), xlab="Y Coordinnates")
     lines(density(OutputDataI_MarkerI$Y_Scaled),   # Add the kernel density estimate (-.5 fix for the bins)
           col = "firebrick2", lwd = 3)
   }
