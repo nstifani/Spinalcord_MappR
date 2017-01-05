@@ -923,21 +923,22 @@ for (SubjectI in 1:nlevels(OutputData$Subject_ID)){
   for(MarkerI in 1:nlevels(OutputDataI$Marker_Name)){
     Marker_NameI<-levels(OutputDataI$Marker_Name)[MarkerI]
     OutputDataI_MarkerI<-OutputDataI[OutputDataI$Marker_Name==Marker_NameI,]
-    if(dim(OutputDataI_MarkerI)[1]<2){
-      hDensity=c( bandwidth.nrd( c( (-max(abs(OutputDataI_MarkerI$X_Scaled))), (max(abs(OutputDataI_MarkerI$X_Scaled))) )),
-          bandwidth.nrd( c( (-max(abs(OutputDataI_MarkerI$Y_Scaled))), (max(abs(OutputDataI_MarkerI$Y_Scaled))) )))
-    } else {
-      hDensity=c( bandwidth.nrd( OutputDataI_MarkerI$X_Scaled), bandwidth.nrd( OutputDataI_MarkerI$Y_Scaled))
-    }
+    if(dim(OutputDataI_MarkerI)[1]>2){
+    #   hDensity=c( bandwidth.nrd( c( (-max(abs(OutputDataI_MarkerI$X_Scaled))), (max(abs(OutputDataI_MarkerI$X_Scaled))) )),
+    #       bandwidth.nrd( c( (-max(abs(OutputDataI_MarkerI$Y_Scaled))), (max(abs(OutputDataI_MarkerI$Y_Scaled))) )))
+    # } else {
+    #   hDensity=c( bandwidth.nrd( OutputDataI_MarkerI$X_Scaled), bandwidth.nrd( OutputDataI_MarkerI$Y_Scaled))
+    # }
     
     Density_OutputDataI_MarkerI<-kde2d(OutputDataI_MarkerI$X_Scaled, OutputDataI_MarkerI$Y_Scaled,
-                                       h=hDensity,
+                                     #  h=hDensity,
                                        n=100, lims=c(-1.5,1.5,-1.5,1.5))
     write.table(Density_OutputDataI_MarkerI, file=file.path(OutputDirPath, "Tables by Subject", "Density Raw",paste0(Subject_IDI,"_",Marker_NameI,".csv")), row.names=FALSE, sep = ",")
     Normalized_Density_OutputDataI_MarkerI<-Density_OutputDataI_MarkerI
     Normalized_Density_OutputDataI_MarkerI$z<- ((Density_OutputDataI_MarkerI$z-min(Density_OutputDataI_MarkerI$z))/(max(Density_OutputDataI_MarkerI$z)-min(Density_OutputDataI_MarkerI$z)))
     write.table(Normalized_Density_OutputDataI_MarkerI, file=file.path(OutputDirPath, "Tables by Subject", "Density Normalized",paste0(Subject_IDI,"_",Marker_NameI,".csv")), row.names=FALSE, sep = ",")
-  }
+  } # and of If
+  } # end of marker I
   
   
   
@@ -1080,15 +1081,15 @@ for (SubjectI in 1:nlevels(OutputData$Subject_ID)){
     
     
     ###Calculate the Density for each MarkerI and add the contour
-    if(dim(OutputDataI_MarkerI)[1]<2){
-      hDensity=c( bandwidth.nrd( c( (-max(abs(OutputDataI_MarkerI$X_Scaled))), (max(abs(OutputDataI_MarkerI$X_Scaled))) )),
-                  bandwidth.nrd( c( (-max(abs(OutputDataI_MarkerI$Y_Scaled))), (max(abs(OutputDataI_MarkerI$Y_Scaled))) )))
-    } else {
-      hDensity=c( bandwidth.nrd( OutputDataI_MarkerI$X_Scaled), bandwidth.nrd( OutputDataI_MarkerI$Y_Scaled))
-    }
+    if(dim(OutputDataI_MarkerI)[1]>2){
+    #   hDensity=c( bandwidth.nrd( c( (-max(abs(OutputDataI_MarkerI$X_Scaled))), (max(abs(OutputDataI_MarkerI$X_Scaled))) )),
+    #               bandwidth.nrd( c( (-max(abs(OutputDataI_MarkerI$Y_Scaled))), (max(abs(OutputDataI_MarkerI$Y_Scaled))) )))
+    # } else {
+    #   hDensity=c( bandwidth.nrd( OutputDataI_MarkerI$X_Scaled), bandwidth.nrd( OutputDataI_MarkerI$Y_Scaled))
+    # }
     
     Density_OutputDataI_MarkerI<-kde2d(OutputDataI_MarkerI$X_Scaled, OutputDataI_MarkerI$Y_Scaled,
-                                       h=hDensity,
+                                     #  h=hDensity,
                                        n=100, lims=c(-1.5,1.5,-1.5,1.5))
     
     
@@ -1100,7 +1101,7 @@ for (SubjectI in 1:nlevels(OutputData$Subject_ID)){
             lty=1, lwd=0.5,
             col=palette()[OutputDataI_MarkerI$Marker_Name],
             zlim = c(0,1), nlevels = 10) # add the contours
-    
+    } # end of if
     
   }## End of for Marker I
   par(xpd=FALSE)
@@ -1147,15 +1148,15 @@ for (SubjectI in 1:nlevels(OutputData$Subject_ID)){
     RightCountOutputDataI_MarkerI<-dim(OutputDataI_MarkerI[OutputDataI_MarkerI$X_Scaled>=0,])[1]
     
     ###Calculate the Density for each MarkerI and add the contour
-    if(dim(OutputDataI_MarkerI)[1]<2){
-      hDensity=c( bandwidth.nrd( c( (-max(abs(OutputDataI_MarkerI$X_Scaled))), (max(abs(OutputDataI_MarkerI$X_Scaled))) )),
-                  bandwidth.nrd( c( (-max(abs(OutputDataI_MarkerI$Y_Scaled))), (max(abs(OutputDataI_MarkerI$Y_Scaled))) )))
-    } else {
-      hDensity=c( bandwidth.nrd( OutputDataI_MarkerI$X_Scaled), bandwidth.nrd( OutputDataI_MarkerI$Y_Scaled))
-    }
+    if(dim(OutputDataI_MarkerI)[1]>2){
+    #   hDensity=c( bandwidth.nrd( c( (-max(abs(OutputDataI_MarkerI$X_Scaled))), (max(abs(OutputDataI_MarkerI$X_Scaled))) )),
+    #               bandwidth.nrd( c( (-max(abs(OutputDataI_MarkerI$Y_Scaled))), (max(abs(OutputDataI_MarkerI$Y_Scaled))) )))
+    # } else {
+    #   hDensity=c( bandwidth.nrd( OutputDataI_MarkerI$X_Scaled), bandwidth.nrd( OutputDataI_MarkerI$Y_Scaled))
+    # }
     
     Density_OutputDataI_MarkerI<-kde2d(OutputDataI_MarkerI$X_Scaled, OutputDataI_MarkerI$Y_Scaled,
-                                       h=hDensity,
+                                     #  h=hDensity,
                                        n=100, lims=c(-1.5,1.5,-1.5,1.5))
     Normalized_Density_OutputDataI_MarkerI<-Density_OutputDataI_MarkerI
     Normalized_Density_OutputDataI_MarkerI$z<- ((Density_OutputDataI_MarkerI$z-min(Density_OutputDataI_MarkerI$z))/(max(Density_OutputDataI_MarkerI$z)-min(Density_OutputDataI_MarkerI$z)))
@@ -1217,7 +1218,7 @@ for (SubjectI in 1:nlevels(OutputData$Subject_ID)){
                    }
     )
     dev.off()
-    
+    } # end of If
   }## End of for Marker I
   
   
