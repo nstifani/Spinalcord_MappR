@@ -467,11 +467,9 @@ for (FileI in 1:nlevels(OutputData$File_ID)){
   
   
   # Plot RAW coordinates for each file
+  cairo_pdf(file.path(OutputDirPath, "Graphs by File", "Raw", paste0(File_IDI,"_Raw_Graph.pdf"))) # Open the graph as pdf
   Xlim=round(max(abs(c(mean(OutputDataI$LE_L_X_Pixel_Centered),mean(OutputDataI$LE_R_X_Pixel_Centered),max(abs(OutputDataI$X_Pixel_Centered))))),-1)
   Ylim=round(max(abs(c(mean(OutputDataI$DE_L_Y_Pixel_Centered),mean(OutputDataI$DE_R_Y_Pixel_Centered),mean(OutputDataI$VE_L_Y_Pixel_Centered),mean(OutputDataI$VE_R_Y_Pixel_Centered), max(abs(OutputDataI$Y_Pixel_Centered))))),-1)
-
-  
-  cairo_pdf(file.path(OutputDirPath, "Graphs by File", "Raw", paste0(File_IDI,"_Raw_Graph.pdf"))) # Open the graph as pdf
   par(xpd=TRUE)
   plot(OutputDataI$X_Pixel_Centered, OutputDataI$Y_Pixel_Centered,
        type="p", bty="n",
@@ -542,12 +540,10 @@ for (FileI in 1:nlevels(OutputData$File_ID)){
 
 
   # Plot SCALED coordinates for each file
+    cairo_pdf(file.path(OutputDirPath, "Graphs by File", "Scaled", paste0(File_IDI,"_Scaled_Graph.pdf"))) # Open the graph as pdf
   Xlim=round(max(abs(c(mean(OutputDataI$LE_L_X_Scaled),mean(OutputDataI$LE_R_X_Scaled),max(abs(OutputDataI$X_Scaled))))),2)
   Ylim=round(max(abs(c(mean(OutputDataI$DE_L_Y_Scaled),mean(OutputDataI$DE_R_Y_Scaled),mean(OutputDataI$VE_L_Y_Scaled),mean(OutputDataI$VE_R_Y_Scaled), max(abs(OutputDataI$Y_Scaled))))),2)
-  
-  
-  cairo_pdf(file.path(OutputDirPath, "Graphs by File", "Scaled", paste0(File_IDI,"_Scaled_Graph.pdf"))) # Open the graph as pdf
-  par(xpd=TRUE)
+    par(xpd=TRUE)
   plot(OutputDataI$X_Scaled, OutputDataI$Y_Scaled,
        type="p", bty="n",
        pch=1,lwd=0.5, cex=0.5, col=OutputDataI$Marker_Name,
@@ -633,12 +629,11 @@ for (SubjectI in 1:nlevels(OutputData$Subject_ID)){
   
   
   # Plot RAW coordinates for each SUBJECT
+ 
+  cairo_pdf(file.path(OutputDirPath, "Graphs by Subject", "Raw", paste0(Subject_IDI,"_Raw_Graph.pdf"))) # Open the graph as pdf
   Xlim=round(max(abs(c(mean(OutputDataI$LE_L_X_Pixel_Centered),mean(OutputDataI$LE_R_X_Pixel_Centered),max(abs(OutputDataI$X_Pixel_Centered))))),-1)
   Ylim=round(max(abs(c(mean(OutputDataI$DE_L_Y_Pixel_Centered),mean(OutputDataI$DE_R_Y_Pixel_Centered),mean(OutputDataI$VE_L_Y_Pixel_Centered),mean(OutputDataI$VE_R_Y_Pixel_Centered), max(abs(OutputDataI$Y_Pixel_Centered))))),-1)
-  
-  
-  cairo_pdf(file.path(OutputDirPath, "Graphs by Subject", "Raw", paste0(Subject_IDI,"_Raw_Graph.pdf"))) # Open the graph as pdf
-  par(xpd=TRUE)
+    par(xpd=TRUE)
   plot(OutputDataI$X_Pixel_Centered, OutputDataI$Y_Pixel_Centered,
        type="p", bty="n",
        pch=1,lwd=0.5, cex=0.5, col=OutputDataI$Marker_Name,
@@ -771,11 +766,11 @@ for (SubjectI in 1:nlevels(OutputData$Subject_ID)){
   
   
   # Plot SCALED coordinates for each SUBJECT
+ 
+  cairo_pdf(file.path(OutputDirPath, "Graphs by Subject", "Scaled", paste0(Subject_IDI,"_Scaled_Graph.pdf"))) # Open the graph as pdf
   Xlim=round(max(abs(c(mean(OutputDataI$LE_L_X_Scaled),mean(OutputDataI$LE_R_X_Scaled),max(abs(OutputDataI$X_Scaled))))),2)
   Ylim=round(max(abs(c(mean(OutputDataI$DE_L_Y_Scaled),mean(OutputDataI$DE_R_Y_Scaled),mean(OutputDataI$VE_L_Y_Scaled),mean(OutputDataI$VE_R_Y_Scaled), max(abs(OutputDataI$Y_Scaled))))),2)
   
-  
-  cairo_pdf(file.path(OutputDirPath, "Graphs by Subject", "Scaled", paste0(Subject_IDI,"_Scaled_Graph.pdf"))) # Open the graph as pdf
   par(xpd=TRUE)
   plot(OutputDataI$X_Scaled, OutputDataI$Y_Scaled,
        type="p", bty="n",
@@ -947,12 +942,12 @@ for (SubjectI in 1:nlevels(OutputData$Subject_ID)){
   
   
   # Plot SCALED coordinates for each SUBJECT and ADD THE CONTOURS
+ 
+  cairo_pdf(file.path(OutputDirPath, "Graphs by Subject", "Contours", paste0(Subject_IDI,"_Contours_Normalized_Graph.pdf"))) # Open the graph as pdf
+  par(xpd=TRUE)
   Xlim=round(max(abs(c(mean(OutputDataI$LE_L_X_Scaled),mean(OutputDataI$LE_R_X_Scaled),max(abs(OutputDataI$X_Scaled))))),2)
   Ylim=round(max(abs(c(mean(OutputDataI$DE_L_Y_Scaled),mean(OutputDataI$DE_R_Y_Scaled),mean(OutputDataI$VE_L_Y_Scaled),mean(OutputDataI$VE_R_Y_Scaled), max(abs(OutputDataI$Y_Scaled))))),2)
   
-  
-  cairo_pdf(file.path(OutputDirPath, "Graphs by Subject", "Contours", paste0(Subject_IDI,"_Contours_Normalized_Graph.pdf"))) # Open the graph as pdf
-  par(xpd=TRUE)
   plot(OutputDataI$X_Scaled, OutputDataI$Y_Scaled,
        type="p", bty="n",
        pch=1,lwd=0.5, cex=0.5, col=OutputDataI$Marker_Name,
