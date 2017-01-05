@@ -528,7 +528,8 @@ for (FileI in 1:nlevels(OutputData$File_ID)){
     # Add the Marker Data to the Legend
     text(LegendTop$rect$left + LegendTop$rect$w/2, LegendTop$text$y,
          c(rep(" ",MarkerI),
-           paste0(Marker_NameI,": " ,LeftCountOutputDataI_MarkerI," + ",RightCountOutputDataI_MarkerI," = ",TotalCountOutputDataI_MarkerI)
+           paste0(Marker_NameI,": " ,LeftCountOutputDataI_MarkerI," + ",RightCountOutputDataI_MarkerI," = ",TotalCountOutputDataI_MarkerI),
+           rep(" ",(nlevels(OutputDataI$Marker_Name))-MarkerI)
            ),
          cex=0.5, col=palette()[MarkerI]
          )
@@ -602,7 +603,8 @@ for (FileI in 1:nlevels(OutputData$File_ID)){
     # Add the Marker Data to the Legend
     text(LegendTop$rect$left + LegendTop$rect$w/2, LegendTop$text$y,
          c(rep(" ",MarkerI),
-           paste0(Marker_NameI,": " ,LeftCountOutputDataI_MarkerI," + ",RightCountOutputDataI_MarkerI," = ",TotalCountOutputDataI_MarkerI)
+           paste0(Marker_NameI,": " ,LeftCountOutputDataI_MarkerI," + ",RightCountOutputDataI_MarkerI," = ",TotalCountOutputDataI_MarkerI),
+           rep(" ",(nlevels(OutputDataI$Marker_Name))-MarkerI)
          ),
          cex=0.5, col=palette()[MarkerI]
     )
@@ -737,13 +739,15 @@ for (SubjectI in 1:nlevels(OutputData$Subject_ID)){
     # Add the Marker Data to the Legend
     text(LegendTop$rect$left + LegendTop$rect$w/2, LegendTop$text$y,
          c(rep(" ",MarkerI),
-           paste0(Marker_NameI,": " ,LeftCountOutputDataI_MarkerI," + ",RightCountOutputDataI_MarkerI," = ",TotalCountOutputDataI_MarkerI)
+           paste0(Marker_NameI,": " ,LeftCountOutputDataI_MarkerI," + ",RightCountOutputDataI_MarkerI," = ",TotalCountOutputDataI_MarkerI),
+           rep(" ",(nlevels(OutputDataI$Marker_Name))-MarkerI)
          ),
          cex=0.5, col=palette()[MarkerI]
     )
     text(LegendLeft$rect$left + LegendLeft$rect$w/2, LegendLeft$text$y,
          c(rep(" ",MarkerI),
-           paste0(Marker_NameI,": ",signif(mean(LeftCountsPerImage_MarkerI),3)," (+/- ",signif(sd(LeftCountsPerImage_MarkerI),3),") ; n = ",length(LeftCountsPerImage_MarkerI))
+           paste0(Marker_NameI,": ",signif(mean(LeftCountsPerImage_MarkerI),3)," (+/- ",signif(sd(LeftCountsPerImage_MarkerI),3),") ; n = ",length(LeftCountsPerImage_MarkerI)),
+           rep(" ",(nlevels(OutputDataI$Marker_Name))-MarkerI)
            
          ),
          cex=0.5, col=palette()[MarkerI]
@@ -751,7 +755,8 @@ for (SubjectI in 1:nlevels(OutputData$Subject_ID)){
     
     text(LegendRight$rect$left + LegendRight$rect$w/2, LegendRight$text$y,
          c(rep(" ",MarkerI),
-           paste0(Marker_NameI,": ",signif(mean(RightCountsPerImage_MarkerI),3)," (+/- ",signif(sd(RightCountsPerImage_MarkerI),3),") ; n = ",length(RightCountsPerImage_MarkerI))
+           paste0(Marker_NameI,": ",signif(mean(RightCountsPerImage_MarkerI),3)," (+/- ",signif(sd(RightCountsPerImage_MarkerI),3),") ; n = ",length(RightCountsPerImage_MarkerI)),
+           rep(" ",(nlevels(OutputDataI$Marker_Name))-MarkerI)
          ),
          cex=0.5, col=palette()[MarkerI]
     )
@@ -872,13 +877,15 @@ for (SubjectI in 1:nlevels(OutputData$Subject_ID)){
     # Add the Marker Data to the Legend
     text(LegendTop$rect$left + LegendTop$rect$w/2, LegendTop$text$y,
          c(rep(" ",MarkerI),
-           paste0(Marker_NameI,": " ,LeftCountOutputDataI_MarkerI," + ",RightCountOutputDataI_MarkerI," = ",TotalCountOutputDataI_MarkerI)
+           paste0(Marker_NameI,": " ,LeftCountOutputDataI_MarkerI," + ",RightCountOutputDataI_MarkerI," = ",TotalCountOutputDataI_MarkerI),
+           rep(" ",(nlevels(OutputDataI$Marker_Name))-MarkerI)
          ),
          cex=0.5, col=palette()[MarkerI]
     )
     text(LegendLeft$rect$left + LegendLeft$rect$w/2, LegendLeft$text$y,
          c(rep(" ",MarkerI),
-           paste0(Marker_NameI,": ",signif(mean(LeftCountsPerImage_MarkerI),3)," (+/- ",signif(sd(LeftCountsPerImage_MarkerI),3),") ; n = ",length(LeftCountsPerImage_MarkerI))
+           paste0(Marker_NameI,": ",signif(mean(LeftCountsPerImage_MarkerI),3)," (+/- ",signif(sd(LeftCountsPerImage_MarkerI),3),") ; n = ",length(LeftCountsPerImage_MarkerI)),
+           rep(" ",(nlevels(OutputDataI$Marker_Name))-MarkerI)
            
          ),
          cex=0.5, col=palette()[MarkerI]
@@ -886,7 +893,8 @@ for (SubjectI in 1:nlevels(OutputData$Subject_ID)){
     
     text(LegendRight$rect$left + LegendRight$rect$w/2, LegendRight$text$y,
          c(rep(" ",MarkerI),
-           paste0(Marker_NameI,": ",signif(mean(RightCountsPerImage_MarkerI),3)," (+/- ",signif(sd(RightCountsPerImage_MarkerI),3),") ; n = ",length(RightCountsPerImage_MarkerI))
+           paste0(Marker_NameI,": ",signif(mean(RightCountsPerImage_MarkerI),3)," (+/- ",signif(sd(RightCountsPerImage_MarkerI),3),") ; n = ",length(RightCountsPerImage_MarkerI)),
+           rep(" ",(nlevels(OutputDataI$Marker_Name))-MarkerI)
          ),
          cex=0.5, col=palette()[MarkerI]
     )
@@ -920,13 +928,21 @@ for (SubjectI in 1:nlevels(OutputData$Subject_ID)){
   for(MarkerI in 1:nlevels(OutputDataI$Marker_Name)){
     Marker_NameI<-levels(OutputDataI$Marker_Name)[MarkerI]
     OutputDataI_MarkerI<-OutputDataI[OutputDataI$Marker_Name==Marker_NameI,]
-    Density_OutputDataI_MarkerI<-kde2d(OutputDataI_MarkerI$X_Scaled, OutputDataI_MarkerI$Y_Scaled, n=100, lims=c(-1.5,1.5,-1.5,1.5))
+    if(dim(OutputDataI_MarkerI)[1]<2){
+      hDensity=c( bandwidth.nrd( c( (-max(abs(OutputDataI_MarkerI$X_Scaled))), (max(abs(OutputDataI_MarkerI$X_Scaled))) )),
+          bandwidth.nrd( c( (-max(abs(OutputDataI_MarkerI$Y_Scaled))), (max(abs(OutputDataI_MarkerI$Y_Scaled))) )))
+    } else {
+      hDensity=c( bandwidth.nrd( OutputDataI_MarkerI$X_Scaled), bandwidth.nrd( OutputDataI_MarkerI$Y_Scaled))
+    }
+    
+    Density_OutputDataI_MarkerI<-kde2d(OutputDataI_MarkerI$X_Scaled, OutputDataI_MarkerI$Y_Scaled,
+                                       h=hDensity,
+                                       n=100, lims=c(-1.5,1.5,-1.5,1.5))
     write.table(Density_OutputDataI_MarkerI, file=file.path(OutputDirPath, "Tables by Subject", "Density Raw",paste0(Subject_IDI,"_",Marker_NameI,".csv")), row.names=FALSE, sep = ",")
     Normalized_Density_OutputDataI_MarkerI<-Density_OutputDataI_MarkerI
     Normalized_Density_OutputDataI_MarkerI$z<- ((Density_OutputDataI_MarkerI$z-min(Density_OutputDataI_MarkerI$z))/(max(Density_OutputDataI_MarkerI$z)-min(Density_OutputDataI_MarkerI$z)))
     write.table(Normalized_Density_OutputDataI_MarkerI, file=file.path(OutputDirPath, "Tables by Subject", "Density Normalized",paste0(Subject_IDI,"_",Marker_NameI,".csv")), row.names=FALSE, sep = ",")
   }
-  
   
   
   
@@ -1046,28 +1062,42 @@ for (SubjectI in 1:nlevels(OutputData$Subject_ID)){
     # Add the Marker Data to the Legend
     text(LegendTop$rect$left + LegendTop$rect$w/2, LegendTop$text$y,
          c(rep(" ",MarkerI),
-           paste0(Marker_NameI,": " ,LeftCountOutputDataI_MarkerI," + ",RightCountOutputDataI_MarkerI," = ",TotalCountOutputDataI_MarkerI)
+           paste0(Marker_NameI,": " ,LeftCountOutputDataI_MarkerI," + ",RightCountOutputDataI_MarkerI," = ",TotalCountOutputDataI_MarkerI),
+           rep(" ",(nlevels(OutputDataI$Marker_Name))-MarkerI)
          ),
          cex=0.5, col=palette()[MarkerI]
     )
     text(LegendLeft$rect$left + LegendLeft$rect$w/2, LegendLeft$text$y,
          c(rep(" ",MarkerI),
-           paste0(Marker_NameI,": ",signif(mean(LeftCountsPerImage_MarkerI),3)," (+/- ",signif(sd(LeftCountsPerImage_MarkerI),3),") ; n = ",length(LeftCountsPerImage_MarkerI))
-           
+           paste0(Marker_NameI,": ",signif(mean(LeftCountsPerImage_MarkerI),3)," (+/- ",signif(sd(LeftCountsPerImage_MarkerI),3),") ; n = ",length(LeftCountsPerImage_MarkerI)),
+           rep(" ",(nlevels(OutputDataI$Marker_Name))-MarkerI)
          ),
          cex=0.5, col=palette()[MarkerI]
     )
     
     text(LegendRight$rect$left + LegendRight$rect$w/2, LegendRight$text$y,
          c(rep(" ",MarkerI),
-           paste0(Marker_NameI,": ",signif(mean(RightCountsPerImage_MarkerI),3)," (+/- ",signif(sd(RightCountsPerImage_MarkerI),3),") ; n = ",length(RightCountsPerImage_MarkerI))
-         ),
+           paste0(Marker_NameI,": ",signif(mean(RightCountsPerImage_MarkerI),3)," (+/- ",signif(sd(RightCountsPerImage_MarkerI),3),") ; n = ",length(RightCountsPerImage_MarkerI)),
+           rep(" ",(nlevels(OutputDataI$Marker_Name))-MarkerI)
+           ),
          cex=0.5, col=palette()[MarkerI]
     )
     
     
     ###Calculate the Density for each MarkerI and add the contour
-    Density_OutputDataI_MarkerI<-kde2d(OutputDataI_MarkerI$X_Scaled, OutputDataI_MarkerI$Y_Scaled, n=100, lims=c(-1.5,1.5,-1.5,1.5))
+    if(dim(OutputDataI_MarkerI)[1]<2){
+      hDensity=c( bandwidth.nrd( c( (-max(abs(OutputDataI_MarkerI$X_Scaled))), (max(abs(OutputDataI_MarkerI$X_Scaled))) )),
+                  bandwidth.nrd( c( (-max(abs(OutputDataI_MarkerI$Y_Scaled))), (max(abs(OutputDataI_MarkerI$Y_Scaled))) )))
+    } else {
+      hDensity=c( bandwidth.nrd( OutputDataI_MarkerI$X_Scaled), bandwidth.nrd( OutputDataI_MarkerI$Y_Scaled))
+    }
+    
+    Density_OutputDataI_MarkerI<-kde2d(OutputDataI_MarkerI$X_Scaled, OutputDataI_MarkerI$Y_Scaled,
+                                       h=hDensity,
+                                       n=100, lims=c(-1.5,1.5,-1.5,1.5))
+    
+    
+    
     Normalized_Density_OutputDataI_MarkerI<-Density_OutputDataI_MarkerI
     Normalized_Density_OutputDataI_MarkerI$z<- ((Density_OutputDataI_MarkerI$z-min(Density_OutputDataI_MarkerI$z))/(max(Density_OutputDataI_MarkerI$z)-min(Density_OutputDataI_MarkerI$z)))
     contour(Normalized_Density_OutputDataI_MarkerI,
@@ -1122,7 +1152,16 @@ for (SubjectI in 1:nlevels(OutputData$Subject_ID)){
     RightCountOutputDataI_MarkerI<-dim(OutputDataI_MarkerI[OutputDataI_MarkerI$X_Scaled>=0,])[1]
     
     ###Calculate the Density for each MarkerI and add the contour
-    Density_OutputDataI_MarkerI<-kde2d(OutputDataI_MarkerI$X_Scaled, OutputDataI_MarkerI$Y_Scaled, n=100, lims=c(-1.5,1.5,-1.5,1.5))
+    if(dim(OutputDataI_MarkerI)[1]<2){
+      hDensity=c( bandwidth.nrd( c( (-max(abs(OutputDataI_MarkerI$X_Scaled))), (max(abs(OutputDataI_MarkerI$X_Scaled))) )),
+                  bandwidth.nrd( c( (-max(abs(OutputDataI_MarkerI$Y_Scaled))), (max(abs(OutputDataI_MarkerI$Y_Scaled))) )))
+    } else {
+      hDensity=c( bandwidth.nrd( OutputDataI_MarkerI$X_Scaled), bandwidth.nrd( OutputDataI_MarkerI$Y_Scaled))
+    }
+    
+    Density_OutputDataI_MarkerI<-kde2d(OutputDataI_MarkerI$X_Scaled, OutputDataI_MarkerI$Y_Scaled,
+                                       h=hDensity,
+                                       n=100, lims=c(-1.5,1.5,-1.5,1.5))
     Normalized_Density_OutputDataI_MarkerI<-Density_OutputDataI_MarkerI
     Normalized_Density_OutputDataI_MarkerI$z<- ((Density_OutputDataI_MarkerI$z-min(Density_OutputDataI_MarkerI$z))/(max(Density_OutputDataI_MarkerI$z)-min(Density_OutputDataI_MarkerI$z)))
     
