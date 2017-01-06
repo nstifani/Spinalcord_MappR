@@ -295,7 +295,7 @@ if((any(colnames(MergedInputData)=="Slice")==FALSE ) && ( any(colnames(MergedInp
   MergedInputData$Label<-MergedInputData$File_ID
   
 }else if ((any(colnames(MergedInputData)=="Slice")==TRUE)&& (any(colnames(MergedInputData)=="Label")==TRUE) && (any(colnames(MergedInputData)=="Channel")==FALSE)){
-  MergedInputData$Channel<-as.character(InputDataI$Label) ## Duplicate the label as a Channel
+  MergedInputData$Channel<-as.character(MergedInputData$Label) ## Duplicate the label as a Channel
   #Create the Channel by removing the File_ID from the Label and then removing the .tif: extension if any so the channel will be 1 2 3 etc...
   for(RowI in 1:length(MergedInputData$Label)){
     MergedInputData$Channel[RowI]<- gsub(as.character(MergedInputData$File_ID[RowI]), "", as.character(MergedInputData$Label[RowI]))
@@ -305,8 +305,8 @@ if((any(colnames(MergedInputData)=="Slice")==FALSE ) && ( any(colnames(MergedInp
 
 ## Make sure MarkerType and Counter are present
 if(( any(colnames(MergedInputData)=="Type")==FALSE ) && ( any(colnames(MergedInputData)=="Counter")==FALSE ) ){
-  MergedInputData$Type<-as.factor(rep(paste0("Type_",1),dim(MergedInputData)[1]))
-  MergedInputData$Counter<-as.factor(rep(paste0("Counter_",1),dim(MergedInputData)[1]))
+  MergedInputData$Type<-as.factor(rep(paste0(001),dim(MergedInputData)[1]))
+  MergedInputData$Counter<-as.factor(rep(paste0(000),dim(MergedInputData)[1]))
 } else if(( any(colnames(MergedInputData)=="Type")==TRUE ) && ( any(colnames(MergedInputData)=="Counter")==FALSE ) ){
   MergedInputData$Type<-as.factor(MergedInputData$Type)
   MergedInputData$Counter<-MergedInputData$Type
