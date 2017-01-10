@@ -4,6 +4,9 @@
 ## Manual CellCounter does not report "inverted Y". So the X=0 Y=0 is the top left corner.
 ## To Invert Non-Inverted Y Coordinates one must take the absolute of the Y Value minus Maximum Y value
 ## Y2=abs(Y-Max(Y))
+## Requires Ghosscript brew install ghostscript
+## The SC Layout is generated from a AI file to generate a postscript XML 
+## PostScriptTrace("Mouse_SC_L4_Normalized.ai")
 
 
 # Functions ---------------------------------------------------------------
@@ -121,10 +124,14 @@ CreateOutputDir.Function <- function(OutputDirLocation, OutputDirName, SubDirLis
   }
 }
 
+## Create a Color Palette From Blue to Red
+BlueToRedPalette<-function(NbOfColor, Transparency){
+  rev(rainbow(n=NbOfColor, s=1, v=1, start=0, end=4/6, alpha=Transparency))}
+
 
 # HouseKeeping ------------------------------------------------------------
 # Install Required Packages
-ListRequiredPackage=c("zoo", "tcltk", "MASS", "Hotelling","ggplot2")
+ListRequiredPackage=c("zoo", "tcltk", "MASS", "Hotelling","ggplot2", "car", "grImport")
 InstallRequiredPackage.Function(ListPackage=ListRequiredPackage)
 
 
@@ -136,7 +143,7 @@ SelectCSVDir.Function(DialogMessage = "Choose the folder containing the CSV Data
                       ListFilePathObjectName="ListInputFilePath",
                       ParentDirPathObjectName="ParentInputDirPath"
 )
-setwd(ParentInputDirPath)
+setwd(InputDirPath)
 # Merge all Input CSV Files into one
 MergeCSVFileList.Function(ListCSVFilePath=ListInputFilePath, MergedObjectName="MergedInputData")
 
@@ -152,7 +159,9 @@ CreateOutputDir.Function(OutputDirLocation=ParentInputDirPath,
                          OutputDirName=paste0(InputDirName,"_Coordinates_Processed"),
                          SubDirList=c("Graphs by File", "Tables by File","Graphs by Subject", "Tables by Subject","Graphs by Group", "Tables by Group") )
 
-
+# Select the XML SC Layout
+SC_Layout_File<-file.choose("Select the XML file of the SC Layout")
+SpinalCordLayout<-readPicture(SC_Layout_File)
 
 # Pre-Process RegistrationData  ---------------------------------------------------
 
@@ -470,10 +479,12 @@ for (FileI in 1:nlevels(OutputData$File_ID)){
   cairo_pdf(file.path(OutputDirPath, "Graphs by File", "Raw", paste0(File_IDI,"_Raw_Graph.pdf"))) # Open the graph as pdf
   Xlim=round(max(abs(c(mean(OutputDataI$LE_L_X_Pixel_Centered),mean(OutputDataI$LE_R_X_Pixel_Centered),max(abs(OutputDataI$X_Pixel_Centered))))),-1)
   Ylim=round(max(abs(c(mean(OutputDataI$DE_L_Y_Pixel_Centered),mean(OutputDataI$DE_R_Y_Pixel_Centered),mean(OutputDataI$VE_L_Y_Pixel_Centered),mean(OutputDataI$VE_R_Y_Pixel_Centered), max(abs(OutputDataI$Y_Pixel_Centered))))),-1)
-  par(xpd=TRUE)
+  
+  NbMarkers=nlevels(OutputDataI$Marker_Name)
+    par(xpd=TRUE)
   plot(OutputDataI$X_Pixel_Centered, OutputDataI$Y_Pixel_Centered,
        type="p", bty="n",
-       pch=1,lwd=0.5, cex=0.5, col=OutputDataI$Marker_Name,
+       pch=1,lwd=0.5, cex=0.5, col=BlueToRedPalette(NbMarkers,1)[OutputDataI$Marker_Name],
        xlim=c(-Xlim,Xlim), ylim=c(-Ylim,Ylim),
        xaxp=c(-Xlim,Xlim,4), yaxp=c(-Ylim,Ylim,4),
        main=File_IDI,
@@ -492,9 +503,9 @@ for (FileI in 1:nlevels(OutputData$File_ID)){
   legend("bottomleft",
          bty="n",
          pch=1, cex=0.5,
-         col=1:length(OutputDataI$Marker_Name),
+         col=BlueToRedPalette(NbMarkers,1),
          title="Marker",
-         legend=unique(OutputDataI$Marker_Name),
+         legend=levels(OutputDataI$Marker_Name),
          xjust = 0.5, yjust = 0.5
   )
   
@@ -529,7 +540,7 @@ for (FileI in 1:nlevels(OutputData$File_ID)){
            paste0(Marker_NameI,": " ,LeftCountOutputDataI_MarkerI," + ",RightCountOutputDataI_MarkerI," = ",TotalCountOutputDataI_MarkerI),
            rep(" ",(nlevels(OutputDataI$Marker_Name))-MarkerI)
            ),
-         cex=0.5, col=palette()[MarkerI]
+         cex=0.5, col=BlueToRedPalette(NbMarkers,1)[MarkerI]
          )
   }## End of for Marker I
   dev.off() # Close and save the graph
@@ -540,17 +551,28 @@ for (FileI in 1:nlevels(OutputData$File_ID)){
 
 
   # Plot SCALED coordinates for each file
-    cairo_pdf(file.path(OutputDirPath, "Graphs by File", "Scaled", paste0(File_IDI,"_Scaled_Graph.pdf"))) # Open the graph as pdf
+  cairo_pdf(file.path(OutputDirPath, "Graphs by File", "Scaled", paste0(File_IDI,"_Scaled_Graph.pdf"))) # Open the graph as pdf
   Xlim=round(max(abs(c(mean(OutputDataI$LE_L_X_Scaled),mean(OutputDataI$LE_R_X_Scaled),max(abs(OutputDataI$X_Scaled))))),2)
   Ylim=round(max(abs(c(mean(OutputDataI$DE_L_Y_Scaled),mean(OutputDataI$DE_R_Y_Scaled),mean(OutputDataI$VE_L_Y_Scaled),mean(OutputDataI$VE_R_Y_Scaled), max(abs(OutputDataI$Y_Scaled))))),2)
+  NbMarkers<-nlevels(OutputDataI$Marker_Name)
     par(xpd=TRUE)
   plot(OutputDataI$X_Scaled, OutputDataI$Y_Scaled,
        type="p", bty="n",
-       pch=1,lwd=0.5, cex=0.5, col=OutputDataI$Marker_Name,
+       pch=1,lwd=0.5, cex=0.5, col=BlueToRedPalette(NbMarkers,1)[OutputDataI$Marker_Name],
        xlim=c(-Xlim,Xlim), ylim=c(-Ylim,Ylim),
        xaxp=c(-Xlim,Xlim,4), yaxp=c(-Ylim,Ylim,4),
        main=File_IDI,
        xlab="Relative position to CC (Scaled)",  ylab="Relative position to CC (Scaled)"
+       ,pannel.first={
+         XCenter= ( par()$mai[2] + (par()$pin[1])/2)/(par()$din[1])
+         YCenter= ( par()$mai[1] + (par()$pin[2])/2)/(par()$din[2])
+         WidthSC=  ((par()$pin[1])/2)/(par()$din[1])
+         HeightSC= ((par()$pin[2])/2)/(par()$din[2])
+         grid.picture(SpinalCordLayout, x=XCenter, y=YCenter,
+                      width=2*WidthSC+0.1*WidthSC, height=2*HeightSC+0.1*HeightSC
+                      ,distort=TRUE)
+         
+       }
   )
   
   points(mean(OutputDataI$CC_X_Scaled),mean(OutputDataI$CC_Y_Scaled), col="black", pch=3, cex=0.5)
@@ -565,9 +587,9 @@ for (FileI in 1:nlevels(OutputData$File_ID)){
   legend("bottomleft",
          bty="n",
          pch=1, cex=0.5,
-         col=1:length(OutputDataI$Marker_Name),
+         col=BlueToRedPalette(NbMarkers,1),
          title="Marker",
-         legend=unique(OutputDataI$Marker_Name),
+         legend=levels(OutputDataI$Marker_Name),
          xjust = 0.5, yjust = 0.5
   )
   
@@ -602,7 +624,7 @@ for (FileI in 1:nlevels(OutputData$File_ID)){
            paste0(Marker_NameI,": " ,LeftCountOutputDataI_MarkerI," + ",RightCountOutputDataI_MarkerI," = ",TotalCountOutputDataI_MarkerI),
            rep(" ",(nlevels(OutputDataI$Marker_Name))-MarkerI)
          ),
-         cex=0.5, col=palette()[MarkerI]
+         cex=0.5, col=BlueToRedPalette(NbMarkers,1)[MarkerI]
     )
   }## End of for Marker I
   dev.off() # Close and save the graph
@@ -633,17 +655,18 @@ for (SubjectI in 1:nlevels(OutputData$Subject_ID)){
   cairo_pdf(file.path(OutputDirPath, "Graphs by Subject", "Raw", paste0(Subject_IDI,"_Raw_Graph.pdf"))) # Open the graph as pdf
   Xlim=round(max(abs(c(mean(OutputDataI$LE_L_X_Pixel_Centered),mean(OutputDataI$LE_R_X_Pixel_Centered),max(abs(OutputDataI$X_Pixel_Centered))))),-1)
   Ylim=round(max(abs(c(mean(OutputDataI$DE_L_Y_Pixel_Centered),mean(OutputDataI$DE_R_Y_Pixel_Centered),mean(OutputDataI$VE_L_Y_Pixel_Centered),mean(OutputDataI$VE_R_Y_Pixel_Centered), max(abs(OutputDataI$Y_Pixel_Centered))))),-1)
-    par(xpd=TRUE)
+  NbMarkers=nlevels(OutputDataI$Marker_Name)
+  par(xpd=TRUE)
   plot(OutputDataI$X_Pixel_Centered, OutputDataI$Y_Pixel_Centered,
        type="p", bty="n",
-       pch=1,lwd=0.5, cex=0.5, col=OutputDataI$Marker_Name,
+       pch=1,lwd=0.5, cex=0.5, col=BlueToRedPalette(NbMarkers,1)[OutputDataI$Marker_Name],
        xlim=c(-Xlim,Xlim), ylim=c(-Ylim,Ylim),
        xaxp=c(-Xlim,Xlim,4), yaxp=c(-Ylim,Ylim,4),
        main=Subject_IDI,
        xlab="Relative position to CC (pixel)",  ylab="Relative position to CC (pixel)"
   )
   
-  
+
   points(mean(OutputDataI$CC_X_Pixel_Centered),mean(OutputDataI$CC_Y_Pixel_Centered), col="black", pch=3, cex=0.5)
   points(mean(OutputDataI$DE_R_X_Pixel_Centered),mean(OutputDataI$DE_R_Y_Pixel_Centered), col="black", pch=3, cex=0.5)
   points(mean(OutputDataI$LE_R_X_Pixel_Centered),mean(OutputDataI$LE_R_Y_Pixel_Centered), col="black", pch=3, cex=0.5)
@@ -655,9 +678,9 @@ for (SubjectI in 1:nlevels(OutputData$Subject_ID)){
   legend("bottomleft",
          bty="n",
          pch=1, cex=0.5,
-         col=1:length(OutputDataI$Marker_Name),
+         col=BlueToRedPalette(NbMarkers,1),
          title="Marker",
-         legend=unique(OutputDataI$Marker_Name),
+         legend=levels(OutputDataI$Marker_Name),
          xjust = 0.5, yjust = 0.5
   )
   
@@ -737,7 +760,7 @@ for (SubjectI in 1:nlevels(OutputData$Subject_ID)){
            paste0(Marker_NameI,": " ,LeftCountOutputDataI_MarkerI," + ",RightCountOutputDataI_MarkerI," = ",TotalCountOutputDataI_MarkerI),
            rep(" ",(nlevels(OutputDataI$Marker_Name))-MarkerI)
          ),
-         cex=0.5, col=palette()[MarkerI]
+         cex=0.5, col=BlueToRedPalette(NbMarkers,1)[MarkerI]
     )
     text(LegendLeft$rect$left + LegendLeft$rect$w/2, LegendLeft$text$y,
          c(rep(" ",MarkerI),
@@ -745,7 +768,7 @@ for (SubjectI in 1:nlevels(OutputData$Subject_ID)){
            rep(" ",(nlevels(OutputDataI$Marker_Name))-MarkerI)
            
          ),
-         cex=0.5, col=palette()[MarkerI]
+         cex=0.5, col=BlueToRedPalette(NbMarkers,1)[MarkerI]
     )
     
     text(LegendRight$rect$left + LegendRight$rect$w/2, LegendRight$text$y,
@@ -753,7 +776,7 @@ for (SubjectI in 1:nlevels(OutputData$Subject_ID)){
            paste0(Marker_NameI,": ",signif(mean(RightCountsPerImage_MarkerI),3)," (+/- ",signif(sd(RightCountsPerImage_MarkerI),3),") ; n = ",length(RightCountsPerImage_MarkerI)),
            rep(" ",(nlevels(OutputDataI$Marker_Name))-MarkerI)
          ),
-         cex=0.5, col=palette()[MarkerI]
+         cex=0.5, col=BlueToRedPalette(NbMarkers,1)[MarkerI]
     )
   }## End of for Marker I
   dev.off() # Close and save the graph
@@ -770,17 +793,56 @@ for (SubjectI in 1:nlevels(OutputData$Subject_ID)){
   cairo_pdf(file.path(OutputDirPath, "Graphs by Subject", "Scaled", paste0(Subject_IDI,"_Scaled_Graph.pdf"))) # Open the graph as pdf
   Xlim=round(max(abs(c(mean(OutputDataI$LE_L_X_Scaled),mean(OutputDataI$LE_R_X_Scaled),max(abs(OutputDataI$X_Scaled))))),2)
   Ylim=round(max(abs(c(mean(OutputDataI$DE_L_Y_Scaled),mean(OutputDataI$DE_R_Y_Scaled),mean(OutputDataI$VE_L_Y_Scaled),mean(OutputDataI$VE_R_Y_Scaled), max(abs(OutputDataI$Y_Scaled))))),2)
-  
+  NbMarkers=nlevels(OutputDataI$Marker_Name)
   par(xpd=TRUE)
   plot(OutputDataI$X_Scaled, OutputDataI$Y_Scaled,
        type="p", bty="n",
-       pch=1,lwd=0.5, cex=0.5, col=OutputDataI$Marker_Name,
+       pch=1,lwd=0.5, cex=0.5, col=BlueToRedPalette(NbMarkers,1)[OutputDataI$Marker_Name],
        xlim=c(-Xlim,Xlim), ylim=c(-Ylim,Ylim),
        xaxp=c(-Xlim,Xlim,4), yaxp=c(-Ylim,Ylim,4),
        main=Subject_IDI,
        xlab="Relative position to CC (Scaled)",  ylab="Relative position to CC (Scaled)"
+       ,pannel.first={
+         XCenter= ( par()$mai[2] + (par()$pin[1])/2)/(par()$din[1])
+         YCenter= ( par()$mai[1] + (par()$pin[2])/2)/(par()$din[2])
+         WidthSC=  ((par()$pin[1])/2)/(par()$din[1])
+         HeightSC= ((par()$pin[2])/2)/(par()$din[2])
+         grid.picture(SpinalCordLayout, x=XCenter, y=YCenter,
+                      width=2*WidthSC+0.1*WidthSC, height=2*HeightSC+0.1*HeightSC
+                      ,distort=TRUE)
+         
+       }
   )
   
+ # SC_Layout_File<- file.choose(new = FALSE)
+ #  SC_Layout_Data<-read.data(SC_Layout_File)
+ #  ellipse(center=c(0,0),shape=matrix(c(4.5,0,0,4.5), nrow=2,ncol=2, byrow=FALSE), radius=0.5,add=TRUE, col="black", center.pch=1, center.cex=0, segments=1000,xlab="",ylab="", lwd=1, lty=1)
+ #  add.image(xpos=0, ypos=0, z=0, adj.x=0.5, adj.y=0.5, image.width=2, image/image.height = NULL, col=tim.colors(256))
+ #  
+
+
+
+  
+  plot(OutputDataI$X_Scaled, OutputDataI$Y_Scaled,
+       type="p", bty="n",
+       pch=1,lwd=0.5, cex=0.5, col=BlueToRedPalette(NbMarkers,1)[OutputDataI$Marker_Name],
+       xlim=c(-Xlim,Xlim), ylim=c(-Ylim,Ylim),
+       xaxp=c(-Xlim,Xlim,4), yaxp=c(-Ylim,Ylim,4),
+       main=Subject_IDI,
+       xlab="Relative position to CC (Scaled)",  ylab="Relative position to CC (Scaled)"
+       ,pannel.first={
+         XCenter= ( par()$mai[2] + (par()$pin[1])/2)/(par()$din[1])
+         YCenter= ( par()$mai[1] + (par()$pin[2])/2)/(par()$din[2])
+         WidthSC=  ((par()$pin[1])/2)/(par()$din[1])
+         HeightSC= ((par()$pin[2])/2)/(par()$din[2])
+         grid.picture(SpinalCordLayout, x=XCenter, y=YCenter,
+                      width=2*WidthSC+0.1*WidthSC, height=2*HeightSC+0.1*HeightSC
+                      ,distort=TRUE)
+         
+       }
+  )
+  
+    
   points(mean(OutputDataI$CC_X_Scaled),mean(OutputDataI$CC_Y_Scaled), col="black", pch=3, cex=0.5)
   points(mean(OutputDataI$DE_R_X_Scaled),mean(OutputDataI$DE_R_Y_Scaled), col="black", pch=3, cex=0.5)
   points(mean(OutputDataI$LE_R_X_Scaled),mean(OutputDataI$LE_R_Y_Scaled), col="black", pch=3, cex=0.5)
@@ -793,9 +855,9 @@ for (SubjectI in 1:nlevels(OutputData$Subject_ID)){
   legend("bottomleft",
          bty="n",
          pch=1, cex=0.5,
-         col=1:length(OutputDataI$Marker_Name),
+         col=BlueToRedPalette(NbMarkers,1),
          title="Marker",
-         legend=unique(OutputDataI$Marker_Name),
+         legend=levels(OutputDataI$Marker_Name),
          xjust = 0.5, yjust = 0.5
   )
   
@@ -875,7 +937,7 @@ for (SubjectI in 1:nlevels(OutputData$Subject_ID)){
            paste0(Marker_NameI,": " ,LeftCountOutputDataI_MarkerI," + ",RightCountOutputDataI_MarkerI," = ",TotalCountOutputDataI_MarkerI),
            rep(" ",(nlevels(OutputDataI$Marker_Name))-MarkerI)
          ),
-         cex=0.5, col=palette()[MarkerI]
+         cex=0.5, col=BlueToRedPalette(NbMarkers,1)[MarkerI]
     )
     text(LegendLeft$rect$left + LegendLeft$rect$w/2, LegendLeft$text$y,
          c(rep(" ",MarkerI),
@@ -883,7 +945,7 @@ for (SubjectI in 1:nlevels(OutputData$Subject_ID)){
            rep(" ",(nlevels(OutputDataI$Marker_Name))-MarkerI)
            
          ),
-         cex=0.5, col=palette()[MarkerI]
+         cex=0.5, col=BlueToRedPalette(NbMarkers,1)[MarkerI]
     )
     
     text(LegendRight$rect$left + LegendRight$rect$w/2, LegendRight$text$y,
@@ -891,7 +953,7 @@ for (SubjectI in 1:nlevels(OutputData$Subject_ID)){
            paste0(Marker_NameI,": ",signif(mean(RightCountsPerImage_MarkerI),3)," (+/- ",signif(sd(RightCountsPerImage_MarkerI),3),") ; n = ",length(RightCountsPerImage_MarkerI)),
            rep(" ",(nlevels(OutputDataI$Marker_Name))-MarkerI)
          ),
-         cex=0.5, col=palette()[MarkerI]
+         cex=0.5, col=BlueToRedPalette(NbMarkers,1)[MarkerI]
     )
   }## End of for Marker I
   par(xpd=FALSE)
@@ -948,14 +1010,24 @@ for (SubjectI in 1:nlevels(OutputData$Subject_ID)){
   par(xpd=TRUE)
   Xlim=round(max(abs(c(mean(OutputDataI$LE_L_X_Scaled),mean(OutputDataI$LE_R_X_Scaled),max(abs(OutputDataI$X_Scaled))))),2)
   Ylim=round(max(abs(c(mean(OutputDataI$DE_L_Y_Scaled),mean(OutputDataI$DE_R_Y_Scaled),mean(OutputDataI$VE_L_Y_Scaled),mean(OutputDataI$VE_R_Y_Scaled), max(abs(OutputDataI$Y_Scaled))))),2)
-  
+  NbMarkers=nlevels(OutputDataI$Marker_Name)
   plot(OutputDataI$X_Scaled, OutputDataI$Y_Scaled,
        type="p", bty="n",
-       pch=1,lwd=0.5, cex=0.5, col=OutputDataI$Marker_Name,
+       pch=1,lwd=0.5, cex=0.5, col=BlueToRedPalette(NbMarkers,1)[OutputDataI$Marker_Name],
        xlim=c(-Xlim,Xlim), ylim=c(-Ylim,Ylim),
        xaxp=c(-Xlim,Xlim,4), yaxp=c(-Ylim,Ylim,4),
        main=Subject_IDI,
        xlab="Relative position to CC (Scaled)",  ylab="Relative position to CC (Scaled)"
+       ,pannel.first={
+         XCenter= ( par()$mai[2] + (par()$pin[1])/2)/(par()$din[1])
+         YCenter= ( par()$mai[1] + (par()$pin[2])/2)/(par()$din[2])
+         WidthSC=  ((par()$pin[1])/2)/(par()$din[1])
+         HeightSC= ((par()$pin[2])/2)/(par()$din[2])
+         grid.picture(SpinalCordLayout, x=XCenter, y=YCenter,
+                      width=2*WidthSC+0.1*WidthSC, height=2*HeightSC+0.1*HeightSC
+                      ,distort=TRUE)
+         
+       }
   )
   
   points(mean(OutputDataI$CC_X_Scaled),mean(OutputDataI$CC_Y_Scaled), col="black", pch=3, cex=0.5)
@@ -970,18 +1042,18 @@ for (SubjectI in 1:nlevels(OutputData$Subject_ID)){
   legend("bottomleft",
          bty="n",
          pch=1, cex=0.5,
-         col=1:length(OutputDataI$Marker_Name),
+         col=BlueToRedPalette(NbMarkers,1),
          title="Marker",
-         legend=unique(OutputDataI$Marker_Name),
+         legend=levels(OutputDataI$Marker_Name),
          xjust = 0.5, yjust = 0.5
   )
   
   legend("bottomright",
          bty="n",
          lty=1, cex=0.5, lwd=0.5,
-         col=1:length(OutputDataI$Marker_Name),
+         col=BlueToRedPalette(NbMarkers,1),
          title="Density",
-         legend=unique(OutputDataI$Marker_Name),
+         legend=levels(OutputDataI$Marker_Name),
          xjust = 0.5, yjust = 0.5
   )
   
@@ -1061,14 +1133,14 @@ for (SubjectI in 1:nlevels(OutputData$Subject_ID)){
            paste0(Marker_NameI,": " ,LeftCountOutputDataI_MarkerI," + ",RightCountOutputDataI_MarkerI," = ",TotalCountOutputDataI_MarkerI),
            rep(" ",(nlevels(OutputDataI$Marker_Name))-MarkerI)
          ),
-         cex=0.5, col=palette()[MarkerI]
+         cex=0.5, col=BlueToRedPalette(NbMarkers,1)[MarkerI]
     )
     text(LegendLeft$rect$left + LegendLeft$rect$w/2, LegendLeft$text$y,
          c(rep(" ",MarkerI),
            paste0(Marker_NameI,": ",signif(mean(LeftCountsPerImage_MarkerI),3)," (+/- ",signif(sd(LeftCountsPerImage_MarkerI),3),") ; n = ",length(LeftCountsPerImage_MarkerI)),
            rep(" ",(nlevels(OutputDataI$Marker_Name))-MarkerI)
          ),
-         cex=0.5, col=palette()[MarkerI]
+         cex=0.5, col=BlueToRedPalette(NbMarkers,1)[MarkerI]
     )
     
     text(LegendRight$rect$left + LegendRight$rect$w/2, LegendRight$text$y,
@@ -1076,7 +1148,7 @@ for (SubjectI in 1:nlevels(OutputData$Subject_ID)){
            paste0(Marker_NameI,": ",signif(mean(RightCountsPerImage_MarkerI),3)," (+/- ",signif(sd(RightCountsPerImage_MarkerI),3),") ; n = ",length(RightCountsPerImage_MarkerI)),
            rep(" ",(nlevels(OutputDataI$Marker_Name))-MarkerI)
            ),
-         cex=0.5, col=palette()[MarkerI]
+         cex=0.5, col=BlueToRedPalette(NbMarkers,1)[MarkerI]
     )
     
     
@@ -1093,13 +1165,12 @@ for (SubjectI in 1:nlevels(OutputData$Subject_ID)){
                                        n=100, lims=c(-1.5,1.5,-1.5,1.5))
     
     
-    
     Normalized_Density_OutputDataI_MarkerI<-Density_OutputDataI_MarkerI
     Normalized_Density_OutputDataI_MarkerI$z<- ((Density_OutputDataI_MarkerI$z-min(Density_OutputDataI_MarkerI$z))/(max(Density_OutputDataI_MarkerI$z)-min(Density_OutputDataI_MarkerI$z)))
     contour(Normalized_Density_OutputDataI_MarkerI,
             add = TRUE, drawlabels = FALSE,
             lty=1, lwd=0.5,
-            col=palette()[OutputDataI_MarkerI$Marker_Name],
+            col=BlueToRedPalette(NbMarkers,1)[MarkerI],
             zlim = c(0,1), nlevels = 10) # add the contours
     } # end of if
     
@@ -1163,63 +1234,149 @@ for (SubjectI in 1:nlevels(OutputData$Subject_ID)){
     
     cairo_pdf(file.path(OutputDirPath, "Graphs by Subject", "Filled Density", paste0(Subject_IDI,"_",Marker_NameI,"_Filled_Density_Graph.pdf"))) # Open the graph as pdf
     par(xpd=TRUE)
-        filled.contour(Normalized_Density_OutputDataI_MarkerI,
-                   xlim=c(-Xlim,Xlim), ylim=c(-Ylim,Ylim), zlim = c(0,1),
-                   nlevels = 21, col=c("#FFFFFF", heat.colors(20)),
-                   plot.title={
-                     title(main=paste0(Subject_IDI,"_", Marker_NameI),cex=0.8,
-                           ylab="Relative position to CC (Scaled)",
-                           xlab="Relative position to CC (Scaled)");
-                     
-                     
-                     LegendLeft <- legend("topleft", legend = c(" "),inset=c(-0,-0.075),
-                                          xjust =0, yjust = 0,
-                                          title = "Avg Cell/Section (+/- SD) ; n Sections", cex=0.7, bty="n");
-                     
-                     text(LegendLeft$rect$left + LegendLeft$rect$w/2, LegendLeft$text$y,
-                          c( paste0(signif(mean(LeftCountsPerImage_MarkerI),3)," (+/- ",signif(sd(LeftCountsPerImage_MarkerI),3),") ; n = ",length(LeftCountsPerImage_MarkerI))),
-                          cex=0.7);
-                     
-                     LegendRight <- legend("topright", legend = c(" "),inset=c(-0,-0.075),
-                                           xjust =0, yjust = 0,
-                                           title = "Avg Cell/Section (+/- SD) ; n Sections", cex=0.7, bty="n");
-                     
-                     text(LegendRight$rect$left + LegendRight$rect$w/2, LegendRight$text$y,
-                          c( paste0(signif(mean(RightCountsPerImage_MarkerI),3)," (+/- ",signif(sd(RightCountsPerImage_MarkerI),3),") ; n = ",length(RightCountsPerImage_MarkerI))),
-                          cex=0.7);
-                     
-                     LegendBottom <- legend("bottom", legend = c(" ", " "),
-                                            text.width = strwidth("Left + Right = Total"),
-                                            xjust = 0.5, yjust = 0.5,
-                                            title = "Nb of Cells", cex=0.7, bty="n");
-                     text(LegendBottom$rect$left + LegendBottom$rect$w/2, LegendBottom$text$y,
-                          c("Left + Right = Total",""), cex=0.7);
-                     text(LegendBottom$rect$left + LegendBottom$rect$w/2, LegendBottom$text$y,
-                          c("",paste0(LeftCountOutputDataI_MarkerI," + ",RightCountOutputDataI_MarkerI," = ",TotalCountOutputDataI_MarkerI)),
-                          cex=0.7);
-                     legend("bottomleft", title="Marker",
-                            legend=unique(OutputDataI_MarkerI$Marker_Name),bty="n",
-                            col=1:length(OutputDataI_MarkerI$Marker_Name),
-                            pch=1, cex=0.5)
-                     
-                   },
-                   key.title=title(main = "Normalized\nCell Density", sub=Marker_NameI, cex.main=0.7, cex.sub=0.7),
-                   frame.plot=FALSE, axes=TRUE,
-                   key.axes=axis(4,seq(0,1,by=0.2)),
-                   plot.axes = {axis(1); axis(2);
-                     par(xpd=FALSE)
-                     abline(v=0, lty=1, lwd=0.5, col="grey");
-                     abline(h=0, lty=1, lwd=0.5, col="grey");
-                     par(xpd=TRUE)
-                     points(OutputDataI_MarkerI$X_Scaled, OutputDataI_MarkerI$Y_Scaled,
-                            pch=1,lwd=0.5, cex=0.5,
-                            col="black"
-                     )
-                   }
+    
+    
+    Xlim=round(max(abs(c(mean(OutputDataI$LE_L_X_Scaled),mean(OutputDataI$LE_R_X_Scaled),max(abs(OutputDataI$X_Scaled))))),2)
+    Ylim=round(max(abs(c(mean(OutputDataI$DE_L_Y_Scaled),mean(OutputDataI$DE_R_Y_Scaled),mean(OutputDataI$VE_L_Y_Scaled),mean(OutputDataI$VE_R_Y_Scaled), max(abs(OutputDataI$Y_Scaled))))),2)
+
+    plot(OutputDataI_MarkerI$X_Scaled, OutputDataI_MarkerI$Y_Scaled,
+         type="n", bty="n",
+         pch=1,lwd=0.5, cex=0.5, col="black",
+         xlim=c(-Xlim,Xlim), ylim=c(-Ylim,Ylim),
+         xaxp=c(-Xlim,Xlim,4), yaxp=c(-Ylim,Ylim,4),
+         main=paste0(Subject_IDI,"_",Marker_NameI),
+         xlab="Relative position to CC (Scaled)",  ylab="Relative position to CC (Scaled)"
+         ,pannel.first={
+           XCenter= ( par()$mai[2] + (par()$pin[1])/2)/(par()$din[1])
+           YCenter= ( par()$mai[1] + (par()$pin[2])/2)/(par()$din[2])
+           WidthSC=  ((par()$pin[1])/2)/(par()$din[1])
+           HeightSC= ((par()$pin[2])/2)/(par()$din[2])
+           grid.picture(SpinalCordLayout, x=XCenter, y=YCenter,
+                        width=2*WidthSC+0.1*WidthSC, height=2*HeightSC+0.1*HeightSC
+                        ,distort=TRUE)
+          
+           
+         }
     )
+    .filled.contour(Normalized_Density_OutputDataI_MarkerI$x,
+                    Normalized_Density_OutputDataI_MarkerI$y,
+                    Normalized_Density_OutputDataI_MarkerI$z,
+                    levels = seq(from=0, to=1, by=1/21), col=c(rgb(red=1,green=1,blue=1,alpha=0), BlueToRedPalette(20,0.5))
+    )
+    points(mean(OutputDataI$CC_X_Scaled),mean(OutputDataI$CC_Y_Scaled), col="black", pch=3, cex=0.5)
+    points(mean(OutputDataI$DE_R_X_Scaled),mean(OutputDataI$DE_R_Y_Scaled), col="black", pch=3, cex=0.5)
+    points(mean(OutputDataI$LE_R_X_Scaled),mean(OutputDataI$LE_R_Y_Scaled), col="black", pch=3, cex=0.5)
+    points(mean(OutputDataI$VE_R_X_Scaled),mean(OutputDataI$VE_R_Y_Scaled), col="black", pch=3, cex=0.5)
+    points(mean(OutputDataI$DE_L_X_Scaled),mean(OutputDataI$DE_L_Y_Scaled), col="black", pch=3, cex=0.5)
+    points(mean(OutputDataI$LE_L_X_Scaled),mean(OutputDataI$LE_L_Y_Scaled), col="black", pch=3, cex=0.5)
+    points(mean(OutputDataI$VE_L_X_Scaled),mean(OutputDataI$VE_L_Y_Scaled), col="black", pch=3, cex=0.5)
+    
+    LegendLeft <- legend("topleft", legend = c(" "),inset=c(-0,-0.075),
+                         xjust =0, yjust = 0,
+                         title = "Avg Cell/Section (+/- SD) ; n Sections", cex=0.7, bty="n");
+    
+    text(LegendLeft$rect$left + LegendLeft$rect$w/2, LegendLeft$text$y,
+         c( paste0(signif(mean(LeftCountsPerImage_MarkerI),3)," (+/- ",signif(sd(LeftCountsPerImage_MarkerI),3),") ; n = ",length(LeftCountsPerImage_MarkerI))),
+         cex=0.7);
+    
+    LegendRight <- legend("topright", legend = c(" "),inset=c(-0,-0.075),
+                          xjust =0, yjust = 0,
+                          title = "Avg Cell/Section (+/- SD) ; n Sections", cex=0.7, bty="n");
+    
+    text(LegendRight$rect$left + LegendRight$rect$w/2, LegendRight$text$y,
+         c( paste0(signif(mean(RightCountsPerImage_MarkerI),3)," (+/- ",signif(sd(RightCountsPerImage_MarkerI),3),") ; n = ",length(RightCountsPerImage_MarkerI))),
+         cex=0.7);
+    
+    LegendBottom <- legend("bottom", legend = c(" ", " "),
+                           text.width = strwidth("Left + Right = Total"),
+                           xjust = 0.5, yjust = 0.5,
+                           title = "Nb of Cells", cex=0.7, bty="n");
+    text(LegendBottom$rect$left + LegendBottom$rect$w/2, LegendBottom$text$y,
+         c("Left + Right = Total",""), cex=0.7);
+    text(LegendBottom$rect$left + LegendBottom$rect$w/2, LegendBottom$text$y,
+         c("",paste0(LeftCountOutputDataI_MarkerI," + ",RightCountOutputDataI_MarkerI," = ",TotalCountOutputDataI_MarkerI)),
+         cex=0.7);
+    legend("bottomleft", title="Marker",
+           legend=Marker_NameI,bty="n",
+           col="black",
+           pch=1, cex=0.5)
+    
+   
+ 
+      par(xpd=FALSE)
+      abline(v=0, lty=1, lwd=0.5, col="grey");
+      abline(h=0, lty=1, lwd=0.5, col="grey");
+      par(xpd=TRUE)
+      points(OutputDataI_MarkerI$X_Scaled, OutputDataI_MarkerI$Y_Scaled,
+             pch=1,lwd=0.5, cex=0.5,
+             col="black")
+      
+   
+   
+    
+         # filled.contour(Normalized_Density_OutputDataI_MarkerI,
+         #           xlim=c(-Xlim,Xlim), ylim=c(-Ylim,Ylim), zlim = c(0,1),
+         #           nlevels = 21, col=c("#FFFFFF", BlueToRedPalette(20))
+         #                           ,plot.title={
+         #             title(main=paste0(Subject_IDI,"_", Marker_NameI),cex=0.8,
+         #                   ylab="Relative position to CC (Scaled)",
+         #                   xlab="Relative position to CC (Scaled)");
+         #             
+         #             
+         #             LegendLeft <- legend("topleft", legend = c(" "),inset=c(-0,-0.075),
+         #                                  xjust =0, yjust = 0,
+         #                                  title = "Avg Cell/Section (+/- SD) ; n Sections", cex=0.7, bty="n");
+         #             
+         #             text(LegendLeft$rect$left + LegendLeft$rect$w/2, LegendLeft$text$y,
+         #                  c( paste0(signif(mean(LeftCountsPerImage_MarkerI),3)," (+/- ",signif(sd(LeftCountsPerImage_MarkerI),3),") ; n = ",length(LeftCountsPerImage_MarkerI))),
+         #                  cex=0.7);
+         #             
+         #             LegendRight <- legend("topright", legend = c(" "),inset=c(-0,-0.075),
+         #                                   xjust =0, yjust = 0,
+         #                                   title = "Avg Cell/Section (+/- SD) ; n Sections", cex=0.7, bty="n");
+         #             
+         #             text(LegendRight$rect$left + LegendRight$rect$w/2, LegendRight$text$y,
+         #                  c( paste0(signif(mean(RightCountsPerImage_MarkerI),3)," (+/- ",signif(sd(RightCountsPerImage_MarkerI),3),") ; n = ",length(RightCountsPerImage_MarkerI))),
+         #                  cex=0.7);
+         #             
+         #             LegendBottom <- legend("bottom", legend = c(" ", " "),
+         #                                    text.width = strwidth("Left + Right = Total"),
+         #                                    xjust = 0.5, yjust = 0.5,
+         #                                    title = "Nb of Cells", cex=0.7, bty="n");
+         #             text(LegendBottom$rect$left + LegendBottom$rect$w/2, LegendBottom$text$y,
+         #                  c("Left + Right = Total",""), cex=0.7);
+         #             text(LegendBottom$rect$left + LegendBottom$rect$w/2, LegendBottom$text$y,
+         #                  c("",paste0(LeftCountOutputDataI_MarkerI," + ",RightCountOutputDataI_MarkerI," = ",TotalCountOutputDataI_MarkerI)),
+         #                  cex=0.7);
+         #             legend("bottomleft", title="Marker",
+         #                    legend=levels(OutputDataI_MarkerI$Marker_Name),bty="n",
+         #                    col=1:length(OutputDataI_MarkerI$Marker_Name),
+         #                    pch=1, cex=0.5)
+         #             
+         #           },
+         #           key.title=title(main = "Normalized\nCell Density", sub=Marker_NameI, cex.main=0.7, cex.sub=0.7),
+         #           frame.plot=FALSE, axes=TRUE,
+         #           key.axes=axis(4,seq(0,1,by=0.2)),
+         #           plot.axes = {axis(1); axis(2);
+         #             par(xpd=FALSE)
+         #             abline(v=0, lty=1, lwd=0.5, col="grey");
+         #             abline(h=0, lty=1, lwd=0.5, col="grey");
+         #             par(xpd=TRUE)
+         #             points(OutputDataI_MarkerI$X_Scaled, OutputDataI_MarkerI$Y_Scaled,
+         #                    pch=1,lwd=0.5, cex=0.5,
+         #                    col="black"
+         #             )
+         #           }
+         # 
+         #           )
+         
+    
+         
+         
     dev.off()
     } # end of If
   }## End of for Marker I
+  
   
   
 } ## End of for SubjectI
