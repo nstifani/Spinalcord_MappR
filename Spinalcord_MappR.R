@@ -158,7 +158,6 @@ CreateOutputDir.Function(OutputDirLocation=ParentInputDirPath,
                          SubDirList=c("Graphs by File", "Tables by File","Graphs by Subject", "Tables by Subject","Graphs by Group", "Tables by Group") )
 
 # Select the XML SC Layout
-
 SC_Layout_File<-file.choose("Select the XML file of the SC Layout")
 SpinalCordLayout<-readPicture(SC_Layout_File)
 
@@ -350,82 +349,6 @@ if((any(colnames(MergedInputData)=="Channel")==TRUE )) { # Marker Name is factor
   MergedInputData$Marker_Name_x_Channel<-as.factor( MergedInputData$Marker_Name_x_Channel)
 } ## end of else
   
-#   
-#     # Prompt for Marker Information
-#     # Select the MarkerTypes
-#     SelectCSVFile.Function(DialogMessage="Select the Marker Information CSV File", DataObjectName = "MarkerData")
-#     MergedInputData$Marker_ID<-as.factor(sprintf("%03d", as.numeric(as.character(MergedInputData$Counter))))
-#     for(RowI in 1:length(MergedInputData$File_ID)){
-#       Marker_IDI<-MergedInputData$Marker_ID[RowI]
-#       MergedInputData$Marker_Name[RowI]<-as.character(MarkerData$Marker_Name[MarkerData$Marker_ID==Marker_IDI])          
-#     }
-#     MergedInputData$Marker_Name<-as.factor( MergedInputData$Marker_Name)
-#   } else{ # If there is No Channel nor Counter
-#     MergedInputData$Channel<-as.character(MergedInputData$Label) ## Duplicate the label as a Channel
-#     #Create the Channel by removing the File_ID from the Label and then removing the .tif: extension if any so the channel will be 1 2 3 etc...
-#     for(RowI in 1:length(MergedInputData$Label)){
-#       MergedInputData$Channel[RowI]<- gsub(as.character(MergedInputData$File_ID[RowI]), "", as.character(MergedInputData$Label[RowI]))
-#       MergedInputData$Channel[RowI]<- gsub(".tif:", "", as.character(MergedInputData$Channel[RowI]))
-#     } # end of for loop
-#   
-#   } # end of else aka No Counter
-# }
-# ## Make sure Slice, Label and Channel are present
-# if((any(colnames(MergedInputData)=="Slice")==FALSE ) && ( any(colnames(MergedInputData)=="Label")==FALSE )    && ( any(colnames(MergedInputData)=="Channel")==FALSE )){
-#   MergedInputData$Slice<-rep(1,dim(MergedInputData)[1])
-#   MergedInputData$Channel<-MergedInputData$Slice
-#   MergedInputData$Label<-MergedInputData$File_ID
-#   
-# } else if ( (any(colnames(MergedInputData)=="Slice")==FALSE) && (any(colnames(MergedInputData)=="Label")==FALSE)  && (any(colnames(MergedInputData)=="Channel")==TRUE)){
-#   MergedInputData$Slice<-as.factor(MergedInputData$Channel)
-#   MergedInputData$Label<-MergedInputData$File_ID
-#   
-# }else if ((any(colnames(MergedInputData)=="Slice")==FALSE)&& (any(colnames(MergedInputData)=="Label")==TRUE)&& (any(colnames(MergedInputData)=="Channel")==FALSE)){
-#   MergedInputData$Channel<-as.character(MergedInputData$Label) ## Duplicate the label as a Channel
-#   #Create the Channel by removing the File_ID from the Label and then removing the .tif: extension if any so the channel will be 1 2 3 etc...
-#   for(RowI in 1:length(MergedInputData$Label)){
-#     MergedInputData$Channel[RowI]<- gsub(as.character(MergedInputData$File_ID[RowI]), "", as.character(MergedInputData$Label[RowI]))
-#     MergedInputData$Channel[RowI]<- gsub(".tif:", "", as.character(MergedInputData$Channel[RowI]))
-#   }
-#   MergedInputData$Slice<-as.factor(MergedInputData$Channel)
-#   
-# }else if ((any(colnames(MergedInputData)=="Slice")==TRUE)&& (any(colnames(MergedInputData)=="Label")==FALSE) && (any(colnames(MergedInputData)=="Channel")==FALSE)){
-#   MergedInputData$Label<-MergedInputData$File_ID
-#   MergedInputData$Channel<-MergedInputData$Slice
-#   
-# }else if ((any(colnames(MergedInputData)=="Slice")==FALSE) && (any(colnames(MergedInputData)=="Label")==TRUE)&& (any(colnames(MergedInputData)=="Channel")==TRUE)){
-#   MergedInputDataSlice<-as.factor(MergedInputData$Channel)
-# }else if ((any(colnames(MergedInputData)=="Slice")==TRUE)&& (any(colnames(MergedInputData)=="Label")==FALSE)&& (any(colnames(MergedInputData)=="Channel")==TRUE)){
-#   MergedInputData$Label<-MergedInputData$File_ID
-#   
-# }else if ((any(colnames(MergedInputData)=="Slice")==TRUE)&& (any(colnames(MergedInputData)=="Label")==TRUE) && (any(colnames(MergedInputData)=="Channel")==FALSE)){
-#   MergedInputData$Channel<-as.character(MergedInputData$Label) ## Duplicate the label as a Channel
-#   #Create the Channel by removing the File_ID from the Label and then removing the .tif: extension if any so the channel will be 1 2 3 etc...
-#   for(RowI in 1:length(MergedInputData$Label)){
-#     MergedInputData$Channel[RowI]<- gsub(as.character(MergedInputData$File_ID[RowI]), "", as.character(MergedInputData$Label[RowI]))
-#     MergedInputData$Channel[RowI]<- gsub(".tif:", "", as.character(MergedInputData$Channel[RowI]))
-#   }
-# }
-# 
-# ## Make sure MarkerType and Counter are present
-# if(( any(colnames(MergedInputData)=="Type")==FALSE ) && ( any(colnames(MergedInputData)=="Counter")==FALSE ) ){
-#   MergedInputData$Type<-as.factor(rep(paste0(001),dim(MergedInputData)[1]))
-#   MergedInputData$Counter<-as.factor(rep(paste0(000),dim(MergedInputData)[1]))
-# } else if(( any(colnames(MergedInputData)=="Type")==TRUE ) && ( any(colnames(MergedInputData)=="Counter")==FALSE ) ){
-#   MergedInputData$Type<-as.factor(MergedInputData$Type)
-#   MergedInputData$Counter<-MergedInputData$Type
-# } else if(( any(colnames(MergedInputData)=="Type")==FALSE ) && ( any(colnames(MergedInputData)=="Counter")==TRUE ) ){
-#   MergedInputData$Counter<-as.factor(MergedInputData$Counter)
-#   MergedInputData$Type<-MergedInputData$Counter
-# }
-# MergedInputData$Marker_ID<-as.factor(sprintf("%03d", as.numeric(as.character(MergedInputData$Counter))))
-# 
-# for(RowI in 1:length(MergedInputData$File_ID)){
-#   Marker_IDI<-MergedInputData$Marker_ID[RowI]
-#   MergedInputData$Marker_Name[RowI]<-as.character(MarkerData$Marker_Name[MarkerData$Marker_ID==Marker_IDI])          
-# }
-# MergedInputData$Marker_Name<-as.factor( MergedInputData$Marker_Name)
-# MergedInputData$File_ID<-as.factor(MergedInputData$File_ID)
 # Gather the Data into MetaData Table -------------------------------------
 
 ##Bring the Marker Data
