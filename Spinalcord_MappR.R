@@ -151,8 +151,6 @@ MergeCSVFileList.Function(ListCSVFilePath=ListInputFilePath, MergedObjectName="M
 # Select the RegistrationData and Registrtion coordinates
 SelectCSVFile.Function(DialogMessage="Select the Registration Coordinates CSV File", DataObjectName = "RegistrationData")
 
-# Select the MarkerTypes
-SelectCSVFile.Function(DialogMessage="Select the Marker Types CSV File", DataObjectName = "MarkerData")
 
 # Create OuputDirectory and Subdirectory
 CreateOutputDir.Function(OutputDirLocation=ParentInputDirPath, 
@@ -160,6 +158,7 @@ CreateOutputDir.Function(OutputDirLocation=ParentInputDirPath,
                          SubDirList=c("Graphs by File", "Tables by File","Graphs by Subject", "Tables by Subject","Graphs by Group", "Tables by Group") )
 
 # Select the XML SC Layout
+
 SC_Layout_File<-file.choose("Select the XML file of the SC Layout")
 SpinalCordLayout<-readPicture(SC_Layout_File)
 
@@ -275,62 +274,158 @@ for(RowI in 1:dim(RegistrationData)[1]){
 # Transform File_ID into factor
 MergedInputData$File_ID<-as.factor(MergedInputData$File_ID)
 
-## Make sure Slice, Label and Channel are present
-if((any(colnames(MergedInputData)=="Slice")==FALSE ) && ( any(colnames(MergedInputData)=="Label")==FALSE )    && ( any(colnames(MergedInputData)=="Channel")==FALSE )){
-  MergedInputData$Slice<-rep(1,dim(MergedInputData)[1])
-  MergedInputData$Channel<-MergedInputData$Slice
-  MergedInputData$Label<-MergedInputData$File_ID
-  
-} else if ( (any(colnames(MergedInputData)=="Slice")==FALSE)            && (any(colnames(MergedInputData)=="Label")==FALSE)  && (any(colnames(MergedInputData)=="Channel")==TRUE)){
-  MergedInputData$Slice<-as.factor(MergedInputData$Channel)
-  MergedInputData$Label<-MergedInputData$File_ID
-  
-}else if ((any(colnames(MergedInputData)=="Slice")==FALSE)&& (any(colnames(MergedInputData)=="Label")==TRUE)&& (any(colnames(MergedInputData)=="Channel")==FALSE)){
-  MergedInputData$Channel<-as.character(MergedInputData$Label) ## Duplicate the label as a Channel
-  #Create the Channel by removing the File_ID from the Label and then removing the .tif: extension if any so the channel will be 1 2 3 etc...
-  for(RowI in 1:length(MergedInputData$Label)){
-    MergedInputData$Channel[RowI]<- gsub(as.character(MergedInputData$File_ID[RowI]), "", as.character(MergedInputData$Label[RowI]))
-    MergedInputData$Channel[RowI]<- gsub(".tif:", "", as.character(MergedInputData$Channel[RowI]))
+## Three cases: when Channel is present, Channel is absent and Counter is present OR absent
+if((any(colnames(MergedInputData)=="Channel")==TRUE )) { # Marker Name is factor of Channel
+  MergedInputData$Marker_Name<-as.factor(as.character(MergedInputData$Channel))
+  MergedInputData$Marker_Name_x_Channel<- MergedInputData$Marker_Name
+} else { # Channel is absent
+  if((any(colnames(MergedInputData)=="Counter")==FALSE )){ ## and Counter is absent because only one has been used then Create One
+    MergedInputData$Counter<-as.factor(rep(paste0(000),dim(MergedInputData)[1]))
   }
-  MergedInputData$Slice<-as.factor(MergedInputData$Channel)
+  # Create Marker_ID
+  MergedInputData$Marker_ID<-as.factor(sprintf("%03d", as.numeric(as.character(MergedInputData$Counter))))
   
-}else if ((any(colnames(MergedInputData)=="Slice")==TRUE)&& (any(colnames(MergedInputData)=="Label")==FALSE) && (any(colnames(MergedInputData)=="Channel")==FALSE)){
-  MergedInputData$Label<-MergedInputData$File_ID
-  MergedInputData$Channel<-MergedInputData$Slice
+  if(nlevels(MergedInputData$Marker_ID)==1){
+    # Prompt String Marker_Name
+    PromptNameDialog <- tktoplevel()
+    Name_Var <- tclVar("Marker_Name")
+    PromptNameDialog$env$Entered_Name <-tkentry(PromptNameDialog, width = "25", textvariable = Name_Var)
+    tkgrid(tklabel(PromptNameDialog, text = "Please enter the Marker Name:", justify = "left"),
+           padx = 10, pady = c(15, 5), sticky = "w")
+    tkgrid(PromptNameDialog$env$Entered_Name, padx = 10, pady = c(0, 15))
+    ClickOK <- function() {
+      Name_Var2 <- tclvalue(Name_Var)
+      tkdestroy(PromptNameDialog)
+      assign("Marker_Name", Name_Var2, envir=.GlobalEnv)
+    }
+    PromptNameDialog$env$Button_OK <-tkbutton(PromptNameDialog, text = "OK", width = -6, command = ClickOK)
+    tkgrid(PromptNameDialog$env$Button_OK, padx = 10, pady = c(5, 15))
+    tkbind(PromptNameDialog$env$Entered_Name, "<Return>", ClickOK)
+    tkfocus(PromptNameDialog)
+    tkwait.window(PromptNameDialog)
+    MergedInputData$Marker_Name<-rep(Marker_Name, length(MergedInputData$File_ID))
+    
+  } else  if(nlevels(MergedInputData$Marker_ID)>1){
+    # Prompt for Marker Information
+    SelectCSVFile.Function(DialogMessage="Select the Marker Information CSV File", DataObjectName = "MarkerData")
+# Get the Marker_Name from the marker_ID in the MarkerData
+    for(RowI in 1:length(MergedInputData$File_ID)){
+      Marker_IDI<-MergedInputData$Marker_ID[RowI]
+      MergedInputData$Marker_Name[RowI]<-as.character(MarkerData$Marker_Name[MarkerData$Marker_ID==Marker_IDI])          
+    }
   
-}else if ((any(colnames(MergedInputData)=="Slice")==FALSE) && (any(colnames(MergedInputData)=="Label")==TRUE)&& (any(colnames(MergedInputData)=="Channel")==TRUE)){
-  MergedInputDataSlice<-as.factor(MergedInputData$Channel)
-}else if ((any(colnames(MergedInputData)=="Slice")==TRUE)&& (any(colnames(MergedInputData)=="Label")==FALSE)&& (any(colnames(MergedInputData)=="Channel")==TRUE)){
-  MergedInputData$Label<-MergedInputData$File_ID
+  } ## End of Get MarkerName
+  MergedInputData$Marker_Name<-as.factor( MergedInputData$Marker_Name)
+ # Create a Channel by the combination of MarkerName and Channel
   
-}else if ((any(colnames(MergedInputData)=="Slice")==TRUE)&& (any(colnames(MergedInputData)=="Label")==TRUE) && (any(colnames(MergedInputData)=="Channel")==FALSE)){
-  MergedInputData$Channel<-as.character(MergedInputData$Label) ## Duplicate the label as a Channel
-  #Create the Channel by removing the File_ID from the Label and then removing the .tif: extension if any so the channel will be 1 2 3 etc...
-  for(RowI in 1:length(MergedInputData$Label)){
-    MergedInputData$Channel[RowI]<- gsub(as.character(MergedInputData$File_ID[RowI]), "", as.character(MergedInputData$Label[RowI]))
-    MergedInputData$Channel[RowI]<- gsub(".tif:", "", as.character(MergedInputData$Channel[RowI]))
+  if((any(colnames(MergedInputData)=="Ch")==TRUE )){ ## and Counter is absent because only one has been used then Create One
+    MergedInputData$Channel<-as.factor(MergedInputData$Ch)
+  } else if((any(colnames(MergedInputData)=="Slice")==TRUE )){
+    MergedInputData$Channel<-as.factor(MergedInputData$Slice)
+  } else if((any(colnames(MergedInputData)=="Type")==TRUE )){
+    MergedInputData$Channel<-as.factor(MergedInputData$Type)
+  } else {
+    # Prompt for Channel Name
+    PromptNameDialog <- tktoplevel()
+   Name_Var <- tclVar("Channel_Name")
+   PromptNameDialog$env$Entered_Name <-tkentry(PromptNameDialog, width = "25", textvariable = Name_Var)
+    tkgrid(tklabel(PromptNameDialog, text = "Please enter the Channel Name:", justify = "left"),
+           padx = 10, pady = c(15, 5), sticky = "w")
+    tkgrid(PromptNameDialog$env$Entered_Name, padx = 10, pady = c(0, 15))
+    ClickOK <- function() {
+      Name_Var2 <- tclvalue(Name_Var)
+      tkdestroy(PromptNameDialog)
+      assign("Channel_Name", Name_Var2, envir=.GlobalEnv)
+    }
+    PromptNameDialog$env$Button_OK <-tkbutton(PromptNameDialog, text = "OK", width = -6, command = ClickOK)
+    tkgrid(PromptNameDialog$env$Button_OK, padx = 10, pady = c(5, 15))
+  #  tkbind(PromptNameDialog$env$Entered_Name, "<Return>", ClickOK)
+  #  tkfocus(PromptNameDialog)
+    tkwait.window(PromptNameDialog)
+    MergedInputData$Channel<-as.factor(as.character(rep(Channel_Name,length(MergedInputData$File_ID))))
   }
-}
 
-## Make sure MarkerType and Counter are present
-if(( any(colnames(MergedInputData)=="Type")==FALSE ) && ( any(colnames(MergedInputData)=="Counter")==FALSE ) ){
-  MergedInputData$Type<-as.factor(rep(paste0(001),dim(MergedInputData)[1]))
-  MergedInputData$Counter<-as.factor(rep(paste0(000),dim(MergedInputData)[1]))
-} else if(( any(colnames(MergedInputData)=="Type")==TRUE ) && ( any(colnames(MergedInputData)=="Counter")==FALSE ) ){
-  MergedInputData$Type<-as.factor(MergedInputData$Type)
-  MergedInputData$Counter<-MergedInputData$Type
-} else if(( any(colnames(MergedInputData)=="Type")==FALSE ) && ( any(colnames(MergedInputData)=="Counter")==TRUE ) ){
-  MergedInputData$Counter<-as.factor(MergedInputData$Counter)
-  MergedInputData$Type<-MergedInputData$Counter
-}
-MergedInputData$Marker_ID<-as.factor(sprintf("%03d", as.numeric(as.character(MergedInputData$Counter))))
-
-for(RowI in 1:length(MergedInputData$File_ID)){
-  Marker_IDI<-MergedInputData$Marker_ID[RowI]
-  MergedInputData$Marker_Name[RowI]<-as.character(MarkerData$Marker_Name[MarkerData$Marker_ID==Marker_IDI])          
-}
-MergedInputData$Marker_Name<-as.factor( MergedInputData$Marker_Name)
-MergedInputData$File_ID<-as.factor(MergedInputData$File_ID)
+  MergedInputData$Marker_Name_x_Channel<- paste0(as.character(MergedInputData$Marker_Name),"_x_Ch",as.character(MergedInputData$Channel))
+  
+  MergedInputData$Marker_Name_x_Channel<-as.factor( MergedInputData$Marker_Name_x_Channel)
+} ## end of else
+  
+#   
+#     # Prompt for Marker Information
+#     # Select the MarkerTypes
+#     SelectCSVFile.Function(DialogMessage="Select the Marker Information CSV File", DataObjectName = "MarkerData")
+#     MergedInputData$Marker_ID<-as.factor(sprintf("%03d", as.numeric(as.character(MergedInputData$Counter))))
+#     for(RowI in 1:length(MergedInputData$File_ID)){
+#       Marker_IDI<-MergedInputData$Marker_ID[RowI]
+#       MergedInputData$Marker_Name[RowI]<-as.character(MarkerData$Marker_Name[MarkerData$Marker_ID==Marker_IDI])          
+#     }
+#     MergedInputData$Marker_Name<-as.factor( MergedInputData$Marker_Name)
+#   } else{ # If there is No Channel nor Counter
+#     MergedInputData$Channel<-as.character(MergedInputData$Label) ## Duplicate the label as a Channel
+#     #Create the Channel by removing the File_ID from the Label and then removing the .tif: extension if any so the channel will be 1 2 3 etc...
+#     for(RowI in 1:length(MergedInputData$Label)){
+#       MergedInputData$Channel[RowI]<- gsub(as.character(MergedInputData$File_ID[RowI]), "", as.character(MergedInputData$Label[RowI]))
+#       MergedInputData$Channel[RowI]<- gsub(".tif:", "", as.character(MergedInputData$Channel[RowI]))
+#     } # end of for loop
+#   
+#   } # end of else aka No Counter
+# }
+# ## Make sure Slice, Label and Channel are present
+# if((any(colnames(MergedInputData)=="Slice")==FALSE ) && ( any(colnames(MergedInputData)=="Label")==FALSE )    && ( any(colnames(MergedInputData)=="Channel")==FALSE )){
+#   MergedInputData$Slice<-rep(1,dim(MergedInputData)[1])
+#   MergedInputData$Channel<-MergedInputData$Slice
+#   MergedInputData$Label<-MergedInputData$File_ID
+#   
+# } else if ( (any(colnames(MergedInputData)=="Slice")==FALSE) && (any(colnames(MergedInputData)=="Label")==FALSE)  && (any(colnames(MergedInputData)=="Channel")==TRUE)){
+#   MergedInputData$Slice<-as.factor(MergedInputData$Channel)
+#   MergedInputData$Label<-MergedInputData$File_ID
+#   
+# }else if ((any(colnames(MergedInputData)=="Slice")==FALSE)&& (any(colnames(MergedInputData)=="Label")==TRUE)&& (any(colnames(MergedInputData)=="Channel")==FALSE)){
+#   MergedInputData$Channel<-as.character(MergedInputData$Label) ## Duplicate the label as a Channel
+#   #Create the Channel by removing the File_ID from the Label and then removing the .tif: extension if any so the channel will be 1 2 3 etc...
+#   for(RowI in 1:length(MergedInputData$Label)){
+#     MergedInputData$Channel[RowI]<- gsub(as.character(MergedInputData$File_ID[RowI]), "", as.character(MergedInputData$Label[RowI]))
+#     MergedInputData$Channel[RowI]<- gsub(".tif:", "", as.character(MergedInputData$Channel[RowI]))
+#   }
+#   MergedInputData$Slice<-as.factor(MergedInputData$Channel)
+#   
+# }else if ((any(colnames(MergedInputData)=="Slice")==TRUE)&& (any(colnames(MergedInputData)=="Label")==FALSE) && (any(colnames(MergedInputData)=="Channel")==FALSE)){
+#   MergedInputData$Label<-MergedInputData$File_ID
+#   MergedInputData$Channel<-MergedInputData$Slice
+#   
+# }else if ((any(colnames(MergedInputData)=="Slice")==FALSE) && (any(colnames(MergedInputData)=="Label")==TRUE)&& (any(colnames(MergedInputData)=="Channel")==TRUE)){
+#   MergedInputDataSlice<-as.factor(MergedInputData$Channel)
+# }else if ((any(colnames(MergedInputData)=="Slice")==TRUE)&& (any(colnames(MergedInputData)=="Label")==FALSE)&& (any(colnames(MergedInputData)=="Channel")==TRUE)){
+#   MergedInputData$Label<-MergedInputData$File_ID
+#   
+# }else if ((any(colnames(MergedInputData)=="Slice")==TRUE)&& (any(colnames(MergedInputData)=="Label")==TRUE) && (any(colnames(MergedInputData)=="Channel")==FALSE)){
+#   MergedInputData$Channel<-as.character(MergedInputData$Label) ## Duplicate the label as a Channel
+#   #Create the Channel by removing the File_ID from the Label and then removing the .tif: extension if any so the channel will be 1 2 3 etc...
+#   for(RowI in 1:length(MergedInputData$Label)){
+#     MergedInputData$Channel[RowI]<- gsub(as.character(MergedInputData$File_ID[RowI]), "", as.character(MergedInputData$Label[RowI]))
+#     MergedInputData$Channel[RowI]<- gsub(".tif:", "", as.character(MergedInputData$Channel[RowI]))
+#   }
+# }
+# 
+# ## Make sure MarkerType and Counter are present
+# if(( any(colnames(MergedInputData)=="Type")==FALSE ) && ( any(colnames(MergedInputData)=="Counter")==FALSE ) ){
+#   MergedInputData$Type<-as.factor(rep(paste0(001),dim(MergedInputData)[1]))
+#   MergedInputData$Counter<-as.factor(rep(paste0(000),dim(MergedInputData)[1]))
+# } else if(( any(colnames(MergedInputData)=="Type")==TRUE ) && ( any(colnames(MergedInputData)=="Counter")==FALSE ) ){
+#   MergedInputData$Type<-as.factor(MergedInputData$Type)
+#   MergedInputData$Counter<-MergedInputData$Type
+# } else if(( any(colnames(MergedInputData)=="Type")==FALSE ) && ( any(colnames(MergedInputData)=="Counter")==TRUE ) ){
+#   MergedInputData$Counter<-as.factor(MergedInputData$Counter)
+#   MergedInputData$Type<-MergedInputData$Counter
+# }
+# MergedInputData$Marker_ID<-as.factor(sprintf("%03d", as.numeric(as.character(MergedInputData$Counter))))
+# 
+# for(RowI in 1:length(MergedInputData$File_ID)){
+#   Marker_IDI<-MergedInputData$Marker_ID[RowI]
+#   MergedInputData$Marker_Name[RowI]<-as.character(MarkerData$Marker_Name[MarkerData$Marker_ID==Marker_IDI])          
+# }
+# MergedInputData$Marker_Name<-as.factor( MergedInputData$Marker_Name)
+# MergedInputData$File_ID<-as.factor(MergedInputData$File_ID)
 # Gather the Data into MetaData Table -------------------------------------
 
 ##Bring the Marker Data
@@ -480,11 +575,11 @@ for (FileI in 1:nlevels(OutputData$File_ID)){
   Xlim=round(max(abs(c(mean(OutputDataI$LE_L_X_Pixel_Centered),mean(OutputDataI$LE_R_X_Pixel_Centered),max(abs(OutputDataI$X_Pixel_Centered))))),-1)
   Ylim=round(max(abs(c(mean(OutputDataI$DE_L_Y_Pixel_Centered),mean(OutputDataI$DE_R_Y_Pixel_Centered),mean(OutputDataI$VE_L_Y_Pixel_Centered),mean(OutputDataI$VE_R_Y_Pixel_Centered), max(abs(OutputDataI$Y_Pixel_Centered))))),-1)
   
-  NbMarkers=nlevels(OutputDataI$Marker_Name)
+  NbMarkers=nlevels(OutputDataI$Marker_Name_x_Channel)
     par(xpd=TRUE)
   plot(OutputDataI$X_Pixel_Centered, OutputDataI$Y_Pixel_Centered,
        type="p", bty="n",
-       pch=1,lwd=0.5, cex=0.5, col=BlueToRedPalette(NbMarkers,1)[OutputDataI$Marker_Name],
+       pch=1,lwd=0.5, cex=0.5, col=BlueToRedPalette(NbMarkers,1)[OutputDataI$Marker_Name_x_Channel],
        xlim=c(-Xlim,Xlim), ylim=c(-Ylim,Ylim),
        xaxp=c(-Xlim,Xlim,4), yaxp=c(-Ylim,Ylim,4),
        main=File_IDI,
@@ -505,7 +600,7 @@ for (FileI in 1:nlevels(OutputData$File_ID)){
          pch=1, cex=0.5,
          col=BlueToRedPalette(NbMarkers,1),
          title="Marker",
-         legend=levels(OutputDataI$Marker_Name),
+         legend=levels(OutputDataI$Marker_Name_x_Channel),
          xjust = 0.5, yjust = 0.5
   )
   
@@ -516,19 +611,19 @@ for (FileI in 1:nlevels(OutputData$File_ID)){
          cex=0.5,
          col="black",
          title="Nb of Cells",
-         legend=c(" ", rep(" ",nlevels(OutputDataI$Marker_Name))),
+         legend=c(" ", rep(" ",nlevels(OutputDataI$Marker_Name_x_Channel))),
          text.width = strwidth("Marker: Left + Right = Total")
           )
   
   text(LegendTop$rect$left + LegendTop$rect$w/2, LegendTop$text$y,
-       c("Marker: Left + Right = Total",rep(" ",nlevels(OutputDataI$Marker_Name))),
+       c("Marker: Left + Right = Total",rep(" ",nlevels(OutputDataI$Marker_Name_x_Channel))),
        cex=0.5)
  
 
   # Add Counts for each Marker
-  for(MarkerI in 1:nlevels(OutputDataI$Marker_Name)){
-    Marker_NameI<-levels(OutputDataI$Marker_Name)[MarkerI]
-    OutputDataI_MarkerI<-OutputDataI[OutputDataI$Marker_Name==Marker_NameI,]
+  for(MarkerI in 1:nlevels(OutputDataI$Marker_Name_x_Channel)){
+    Marker_NameI<-levels(OutputDataI$Marker_Name_x_Channel)[MarkerI]
+    OutputDataI_MarkerI<-OutputDataI[OutputDataI$Marker_Name_x_Channel==Marker_NameI,]
     NbImages<-length(levels(OutputDataI$File_ID))
     TotalCountOutputDataI_MarkerI<-dim(OutputDataI_MarkerI)[1]
     LeftCountOutputDataI_MarkerI<-dim(OutputDataI_MarkerI[OutputDataI_MarkerI$X_Scaled<0,])[1]
@@ -538,7 +633,7 @@ for (FileI in 1:nlevels(OutputData$File_ID)){
     text(LegendTop$rect$left + LegendTop$rect$w/2, LegendTop$text$y,
          c(rep(" ",MarkerI),
            paste0(Marker_NameI,": " ,LeftCountOutputDataI_MarkerI," + ",RightCountOutputDataI_MarkerI," = ",TotalCountOutputDataI_MarkerI),
-           rep(" ",(nlevels(OutputDataI$Marker_Name))-MarkerI)
+           rep(" ",(nlevels(OutputDataI$Marker_Name_x_Channel))-MarkerI)
            ),
          cex=0.5, col=BlueToRedPalette(NbMarkers,1)[MarkerI]
          )
@@ -554,11 +649,11 @@ for (FileI in 1:nlevels(OutputData$File_ID)){
   cairo_pdf(file.path(OutputDirPath, "Graphs by File", "Scaled", paste0(File_IDI,"_Scaled_Graph.pdf"))) # Open the graph as pdf
   Xlim=round(max(abs(c(mean(OutputDataI$LE_L_X_Scaled),mean(OutputDataI$LE_R_X_Scaled),max(abs(OutputDataI$X_Scaled))))),2)
   Ylim=round(max(abs(c(mean(OutputDataI$DE_L_Y_Scaled),mean(OutputDataI$DE_R_Y_Scaled),mean(OutputDataI$VE_L_Y_Scaled),mean(OutputDataI$VE_R_Y_Scaled), max(abs(OutputDataI$Y_Scaled))))),2)
-  NbMarkers<-nlevels(OutputDataI$Marker_Name)
+  NbMarkers<-nlevels(OutputDataI$Marker_Name_x_Channel)
     par(xpd=TRUE)
   plot(OutputDataI$X_Scaled, OutputDataI$Y_Scaled,
        type="p", bty="n",
-       pch=1,lwd=0.5, cex=0.5, col=BlueToRedPalette(NbMarkers,1)[OutputDataI$Marker_Name],
+       pch=1,lwd=0.5, cex=0.5, col=BlueToRedPalette(NbMarkers,1)[OutputDataI$Marker_Name_x_Channel],
        xlim=c(-Xlim,Xlim), ylim=c(-Ylim,Ylim),
        xaxp=c(-Xlim,Xlim,4), yaxp=c(-Ylim,Ylim,4),
        main=File_IDI,
@@ -589,7 +684,7 @@ for (FileI in 1:nlevels(OutputData$File_ID)){
          pch=1, cex=0.5,
          col=BlueToRedPalette(NbMarkers,1),
          title="Marker",
-         legend=levels(OutputDataI$Marker_Name),
+         legend=levels(OutputDataI$Marker_Name_x_Channel),
          xjust = 0.5, yjust = 0.5
   )
   
@@ -600,19 +695,19 @@ for (FileI in 1:nlevels(OutputData$File_ID)){
                       cex=0.5,
                       col="black",
                       title="Nb of Cells",
-                      legend=c(" ", rep(" ",nlevels(OutputDataI$Marker_Name))),
+                      legend=c(" ", rep(" ",nlevels(OutputDataI$Marker_Name_x_Channel))),
                       text.width = strwidth("Marker: Left + Right = Total")
   )
   
   text(LegendTop$rect$left + LegendTop$rect$w/2, LegendTop$text$y,
-       c("Marker: Left + Right = Total",rep(" ",nlevels(OutputDataI$Marker_Name))),
+       c("Marker: Left + Right = Total",rep(" ",nlevels(OutputDataI$Marker_Name_x_Channel))),
        cex=0.5)
   
   
   # Add Counts for each Marker
-  for(MarkerI in 1:nlevels(OutputDataI$Marker_Name)){
-    Marker_NameI<-levels(OutputDataI$Marker_Name)[MarkerI]
-    OutputDataI_MarkerI<-OutputDataI[OutputDataI$Marker_Name==Marker_NameI,]
+  for(MarkerI in 1:nlevels(OutputDataI$Marker_Name_x_Channel)){
+    Marker_NameI<-levels(OutputDataI$Marker_Name_x_Channel)[MarkerI]
+    OutputDataI_MarkerI<-OutputDataI[OutputDataI$Marker_Name_x_Channel==Marker_NameI,]
     NbImages<-length(levels(OutputDataI$File_ID))
     TotalCountOutputDataI_MarkerI<-dim(OutputDataI_MarkerI)[1]
     LeftCountOutputDataI_MarkerI<-dim(OutputDataI_MarkerI[OutputDataI_MarkerI$X_Scaled<0,])[1]
@@ -622,7 +717,7 @@ for (FileI in 1:nlevels(OutputData$File_ID)){
     text(LegendTop$rect$left + LegendTop$rect$w/2, LegendTop$text$y,
          c(rep(" ",MarkerI),
            paste0(Marker_NameI,": " ,LeftCountOutputDataI_MarkerI," + ",RightCountOutputDataI_MarkerI," = ",TotalCountOutputDataI_MarkerI),
-           rep(" ",(nlevels(OutputDataI$Marker_Name))-MarkerI)
+           rep(" ",(nlevels(OutputDataI$Marker_Name_x_Channel))-MarkerI)
          ),
          cex=0.5, col=BlueToRedPalette(NbMarkers,1)[MarkerI]
     )
@@ -655,11 +750,11 @@ for (SubjectI in 1:nlevels(OutputData$Subject_ID)){
   cairo_pdf(file.path(OutputDirPath, "Graphs by Subject", "Raw", paste0(Subject_IDI,"_Raw_Graph.pdf"))) # Open the graph as pdf
   Xlim=round(max(abs(c(mean(OutputDataI$LE_L_X_Pixel_Centered),mean(OutputDataI$LE_R_X_Pixel_Centered),max(abs(OutputDataI$X_Pixel_Centered))))),-1)
   Ylim=round(max(abs(c(mean(OutputDataI$DE_L_Y_Pixel_Centered),mean(OutputDataI$DE_R_Y_Pixel_Centered),mean(OutputDataI$VE_L_Y_Pixel_Centered),mean(OutputDataI$VE_R_Y_Pixel_Centered), max(abs(OutputDataI$Y_Pixel_Centered))))),-1)
-  NbMarkers=nlevels(OutputDataI$Marker_Name)
+  NbMarkers=nlevels(OutputDataI$Marker_Name_x_Channel)
   par(xpd=TRUE)
   plot(OutputDataI$X_Pixel_Centered, OutputDataI$Y_Pixel_Centered,
        type="p", bty="n",
-       pch=1,lwd=0.5, cex=0.5, col=BlueToRedPalette(NbMarkers,1)[OutputDataI$Marker_Name],
+       pch=1,lwd=0.5, cex=0.5, col=BlueToRedPalette(NbMarkers,1)[OutputDataI$Marker_Name_x_Channel],
        xlim=c(-Xlim,Xlim), ylim=c(-Ylim,Ylim),
        xaxp=c(-Xlim,Xlim,4), yaxp=c(-Ylim,Ylim,4),
        main=Subject_IDI,
@@ -680,7 +775,7 @@ for (SubjectI in 1:nlevels(OutputData$Subject_ID)){
          pch=1, cex=0.5,
          col=BlueToRedPalette(NbMarkers,1),
          title="Marker",
-         legend=levels(OutputDataI$Marker_Name),
+         legend=levels(OutputDataI$Marker_Name_x_Channel),
          xjust = 0.5, yjust = 0.5
   )
   
@@ -691,12 +786,12 @@ for (SubjectI in 1:nlevels(OutputData$Subject_ID)){
                       cex=0.5,
                       col="black",
                       title="Nb Of Cells",
-                      legend=c(" ", rep(" ",nlevels(OutputDataI$Marker_Name))),
+                      legend=c(" ", rep(" ",nlevels(OutputDataI$Marker_Name_x_Channel))),
                       text.width = strwidth("Marker: Left + Right = Total")
   )
   
   text(LegendTop$rect$left + LegendTop$rect$w/2, LegendTop$text$y,
-       c("Marker: Left + Right = Total",rep(" ",nlevels(OutputDataI$Marker_Name))),
+       c("Marker: Left + Right = Total",rep(" ",nlevels(OutputDataI$Marker_Name_x_Channel))),
        cex=0.5)
   
   LegendLeft <- legend("topleft",
@@ -707,11 +802,11 @@ for (SubjectI in 1:nlevels(OutputData$Subject_ID)){
                        col="black",
                        title="Left Side Counts",
                        text.width = strwidth("Marker: Avg Cell/Section (+/- StDev) ; n Sections")/2,
-                       legend=c(" ", rep(" ",nlevels(OutputDataI$Marker_Name)))
+                       legend=c(" ", rep(" ",nlevels(OutputDataI$Marker_Name_x_Channel)))
   )
   
   text(LegendLeft$rect$left + LegendLeft$rect$w/2, LegendLeft$text$y,
-       c("Marker: Avg Cell/Section (+/- StDev) ; n Sections",rep(" ",nlevels(OutputDataI$Marker_Name))),
+       c("Marker: Avg Cell/Section (+/- StDev) ; n Sections",rep(" ",nlevels(OutputDataI$Marker_Name_x_Channel))),
        cex=0.5)
   
   LegendRight <- legend("topright",
@@ -722,10 +817,10 @@ for (SubjectI in 1:nlevels(OutputData$Subject_ID)){
                         col="black",
                         title="Right Side Counts",
                         text.width = strwidth("Avg Cell/Section (+/- SD) ; n Sections")/2,
-                        legend=c(" ", rep(" ",nlevels(OutputDataI$Marker_Name)))
+                        legend=c(" ", rep(" ",nlevels(OutputDataI$Marker_Name_x_Channel)))
   )
   text(LegendRight$rect$left + LegendRight$rect$w/2, LegendRight$text$y,
-       c("Marker: Avg Cell/Section (+/- StDev) ; n Sections",rep(" ",nlevels(OutputDataI$Marker_Name))),
+       c("Marker: Avg Cell/Section (+/- StDev) ; n Sections",rep(" ",nlevels(OutputDataI$Marker_Name_x_Channel))),
        cex=0.5)
   
   
@@ -733,9 +828,9 @@ for (SubjectI in 1:nlevels(OutputData$Subject_ID)){
   
   
   # Add Counts for each Marker
-  for(MarkerI in 1:nlevels(OutputDataI$Marker_Name)){
-    Marker_NameI<-levels(OutputDataI$Marker_Name)[MarkerI]
-    OutputDataI_MarkerI<-OutputDataI[OutputDataI$Marker_Name==Marker_NameI,]
+  for(MarkerI in 1:nlevels(OutputDataI$Marker_Name_x_Channel)){
+    Marker_NameI<-levels(OutputDataI$Marker_Name_x_Channel)[MarkerI]
+    OutputDataI_MarkerI<-OutputDataI[OutputDataI$Marker_Name_x_Channel==Marker_NameI,]
     NbImages<-length(levels(OutputDataI$File_ID))
     LeftCountsPerImage_MarkerI<-c()
     RightCountsPerImage_MarkerI<-c()
@@ -744,8 +839,8 @@ for (SubjectI in 1:nlevels(OutputData$Subject_ID)){
       DataImageI<-OutputDataI[OutputDataI$File_ID==Image_IDI,]
       LeftDataImageI<-DataImageI[DataImageI$X_Scaled<0,]
       RightDataImageI<-DataImageI[DataImageI$X_Scaled>=0,]
-      LeftDataImageI_MarkerI<-LeftDataImageI[LeftDataImageI$Marker_Name==Marker_NameI,]
-      RightDataImageI_MarkerI<-RightDataImageI[RightDataImageI$Marker_Name==Marker_NameI,]
+      LeftDataImageI_MarkerI<-LeftDataImageI[LeftDataImageI$Marker_Name_x_Channel==Marker_NameI,]
+      RightDataImageI_MarkerI<-RightDataImageI[RightDataImageI$Marker_Name_x_Channel==Marker_NameI,]
       LeftCountsPerImage_MarkerI<-c(LeftCountsPerImage_MarkerI,dim(LeftDataImageI_MarkerI)[1])
       RightCountsPerImage_MarkerI<-c(RightCountsPerImage_MarkerI,dim(RightDataImageI_MarkerI)[1])
     }
@@ -758,14 +853,14 @@ for (SubjectI in 1:nlevels(OutputData$Subject_ID)){
     text(LegendTop$rect$left + LegendTop$rect$w/2, LegendTop$text$y,
          c(rep(" ",MarkerI),
            paste0(Marker_NameI,": " ,LeftCountOutputDataI_MarkerI," + ",RightCountOutputDataI_MarkerI," = ",TotalCountOutputDataI_MarkerI),
-           rep(" ",(nlevels(OutputDataI$Marker_Name))-MarkerI)
+           rep(" ",(nlevels(OutputDataI$Marker_Name_x_Channel))-MarkerI)
          ),
          cex=0.5, col=BlueToRedPalette(NbMarkers,1)[MarkerI]
     )
     text(LegendLeft$rect$left + LegendLeft$rect$w/2, LegendLeft$text$y,
          c(rep(" ",MarkerI),
            paste0(Marker_NameI,": ",signif(mean(LeftCountsPerImage_MarkerI),3)," (+/- ",signif(sd(LeftCountsPerImage_MarkerI),3),") ; n = ",length(LeftCountsPerImage_MarkerI)),
-           rep(" ",(nlevels(OutputDataI$Marker_Name))-MarkerI)
+           rep(" ",(nlevels(OutputDataI$Marker_Name_x_Channel))-MarkerI)
            
          ),
          cex=0.5, col=BlueToRedPalette(NbMarkers,1)[MarkerI]
@@ -774,7 +869,7 @@ for (SubjectI in 1:nlevels(OutputData$Subject_ID)){
     text(LegendRight$rect$left + LegendRight$rect$w/2, LegendRight$text$y,
          c(rep(" ",MarkerI),
            paste0(Marker_NameI,": ",signif(mean(RightCountsPerImage_MarkerI),3)," (+/- ",signif(sd(RightCountsPerImage_MarkerI),3),") ; n = ",length(RightCountsPerImage_MarkerI)),
-           rep(" ",(nlevels(OutputDataI$Marker_Name))-MarkerI)
+           rep(" ",(nlevels(OutputDataI$Marker_Name_x_Channel))-MarkerI)
          ),
          cex=0.5, col=BlueToRedPalette(NbMarkers,1)[MarkerI]
     )
@@ -793,11 +888,11 @@ for (SubjectI in 1:nlevels(OutputData$Subject_ID)){
   cairo_pdf(file.path(OutputDirPath, "Graphs by Subject", "Scaled", paste0(Subject_IDI,"_Scaled_Graph.pdf"))) # Open the graph as pdf
   Xlim=round(max(abs(c(mean(OutputDataI$LE_L_X_Scaled),mean(OutputDataI$LE_R_X_Scaled),max(abs(OutputDataI$X_Scaled))))),2)
   Ylim=round(max(abs(c(mean(OutputDataI$DE_L_Y_Scaled),mean(OutputDataI$DE_R_Y_Scaled),mean(OutputDataI$VE_L_Y_Scaled),mean(OutputDataI$VE_R_Y_Scaled), max(abs(OutputDataI$Y_Scaled))))),2)
-  NbMarkers=nlevels(OutputDataI$Marker_Name)
+  NbMarkers=nlevels(OutputDataI$Marker_Name_x_Channel)
   par(xpd=TRUE)
   plot(OutputDataI$X_Scaled, OutputDataI$Y_Scaled,
        type="p", bty="n",
-       pch=1,lwd=0.5, cex=0.5, col=BlueToRedPalette(NbMarkers,1)[OutputDataI$Marker_Name],
+       pch=1,lwd=0.5, cex=0.5, col=BlueToRedPalette(NbMarkers,1)[OutputDataI$Marker_Name_x_Channel],
        xlim=c(-Xlim,Xlim), ylim=c(-Ylim,Ylim),
        xaxp=c(-Xlim,Xlim,4), yaxp=c(-Ylim,Ylim,4),
        main=Subject_IDI,
@@ -825,7 +920,7 @@ for (SubjectI in 1:nlevels(OutputData$Subject_ID)){
   
   plot(OutputDataI$X_Scaled, OutputDataI$Y_Scaled,
        type="p", bty="n",
-       pch=1,lwd=0.5, cex=0.5, col=BlueToRedPalette(NbMarkers,1)[OutputDataI$Marker_Name],
+       pch=1,lwd=0.5, cex=0.5, col=BlueToRedPalette(NbMarkers,1)[OutputDataI$Marker_Name_x_Channel],
        xlim=c(-Xlim,Xlim), ylim=c(-Ylim,Ylim),
        xaxp=c(-Xlim,Xlim,4), yaxp=c(-Ylim,Ylim,4),
        main=Subject_IDI,
@@ -857,7 +952,7 @@ for (SubjectI in 1:nlevels(OutputData$Subject_ID)){
          pch=1, cex=0.5,
          col=BlueToRedPalette(NbMarkers,1),
          title="Marker",
-         legend=levels(OutputDataI$Marker_Name),
+         legend=levels(OutputDataI$Marker_Name_x_Channel),
          xjust = 0.5, yjust = 0.5
   )
   
@@ -868,12 +963,12 @@ for (SubjectI in 1:nlevels(OutputData$Subject_ID)){
                       cex=0.5,
                       col="black",
                       title="Nb Of Cells",
-                      legend=c(" ", rep(" ",nlevels(OutputDataI$Marker_Name))),
+                      legend=c(" ", rep(" ",nlevels(OutputDataI$Marker_Name_x_Channel))),
                       text.width = strwidth("Marker: Left + Right = Total")
   )
   
   text(LegendTop$rect$left + LegendTop$rect$w/2, LegendTop$text$y,
-       c("Marker: Left + Right = Total",rep(" ",nlevels(OutputDataI$Marker_Name))),
+       c("Marker: Left + Right = Total",rep(" ",nlevels(OutputDataI$Marker_Name_x_Channel))),
        cex=0.5)
   
   LegendLeft <- legend("topleft",
@@ -884,11 +979,11 @@ for (SubjectI in 1:nlevels(OutputData$Subject_ID)){
                        col="black",
                        title="Left Side Counts",
                        text.width = strwidth("Marker: Avg Cell/Section (+/- StDev) ; n Sections")/2,
-                       legend=c(" ", rep(" ",nlevels(OutputDataI$Marker_Name)))
+                       legend=c(" ", rep(" ",nlevels(OutputDataI$Marker_Name_x_Channel)))
   )
   
   text(LegendLeft$rect$left + LegendLeft$rect$w/2, LegendLeft$text$y,
-       c("Marker: Avg Cell/Section (+/- StDev) ; n Sections",rep(" ",nlevels(OutputDataI$Marker_Name))),
+       c("Marker: Avg Cell/Section (+/- StDev) ; n Sections",rep(" ",nlevels(OutputDataI$Marker_Name_x_Channel))),
        cex=0.5)
   
   LegendRight <- legend("topright",
@@ -899,10 +994,10 @@ for (SubjectI in 1:nlevels(OutputData$Subject_ID)){
                         col="black",
                         title="Right Side Counts",
                         text.width = strwidth("Avg Cell/Section (+/- SD) ; n Sections")/2,
-                        legend=c(" ", rep(" ",nlevels(OutputDataI$Marker_Name)))
+                        legend=c(" ", rep(" ",nlevels(OutputDataI$Marker_Name_x_Channel)))
   )
   text(LegendRight$rect$left + LegendRight$rect$w/2, LegendRight$text$y,
-       c("Marker: Avg Cell/Section (+/- StDev) ; n Sections",rep(" ",nlevels(OutputDataI$Marker_Name))),
+       c("Marker: Avg Cell/Section (+/- StDev) ; n Sections",rep(" ",nlevels(OutputDataI$Marker_Name_x_Channel))),
        cex=0.5)
   
   
@@ -910,9 +1005,9 @@ for (SubjectI in 1:nlevels(OutputData$Subject_ID)){
   
   
   # Add Counts for each Marker
-  for(MarkerI in 1:nlevels(OutputDataI$Marker_Name)){
-    Marker_NameI<-levels(OutputDataI$Marker_Name)[MarkerI]
-    OutputDataI_MarkerI<-OutputDataI[OutputDataI$Marker_Name==Marker_NameI,]
+  for(MarkerI in 1:nlevels(OutputDataI$Marker_Name_x_Channel)){
+    Marker_NameI<-levels(OutputDataI$Marker_Name_x_Channel)[MarkerI]
+    OutputDataI_MarkerI<-OutputDataI[OutputDataI$Marker_Name_x_Channel==Marker_NameI,]
     NbImages<-length(levels(OutputDataI$File_ID))
     LeftCountsPerImage_MarkerI<-c()
     RightCountsPerImage_MarkerI<-c()
@@ -921,8 +1016,8 @@ for (SubjectI in 1:nlevels(OutputData$Subject_ID)){
       DataImageI<-OutputDataI[OutputDataI$File_ID==Image_IDI,]
       LeftDataImageI<-DataImageI[DataImageI$X_Scaled<0,]
       RightDataImageI<-DataImageI[DataImageI$X_Scaled>=0,]
-      LeftDataImageI_MarkerI<-LeftDataImageI[LeftDataImageI$Marker_Name==Marker_NameI,]
-      RightDataImageI_MarkerI<-RightDataImageI[RightDataImageI$Marker_Name==Marker_NameI,]
+      LeftDataImageI_MarkerI<-LeftDataImageI[LeftDataImageI$Marker_Name_x_Channel==Marker_NameI,]
+      RightDataImageI_MarkerI<-RightDataImageI[RightDataImageI$Marker_Name_x_Channel==Marker_NameI,]
       LeftCountsPerImage_MarkerI<-c(LeftCountsPerImage_MarkerI,dim(LeftDataImageI_MarkerI)[1])
       RightCountsPerImage_MarkerI<-c(RightCountsPerImage_MarkerI,dim(RightDataImageI_MarkerI)[1])
     }
@@ -935,14 +1030,14 @@ for (SubjectI in 1:nlevels(OutputData$Subject_ID)){
     text(LegendTop$rect$left + LegendTop$rect$w/2, LegendTop$text$y,
          c(rep(" ",MarkerI),
            paste0(Marker_NameI,": " ,LeftCountOutputDataI_MarkerI," + ",RightCountOutputDataI_MarkerI," = ",TotalCountOutputDataI_MarkerI),
-           rep(" ",(nlevels(OutputDataI$Marker_Name))-MarkerI)
+           rep(" ",(nlevels(OutputDataI$Marker_Name_x_Channel))-MarkerI)
          ),
          cex=0.5, col=BlueToRedPalette(NbMarkers,1)[MarkerI]
     )
     text(LegendLeft$rect$left + LegendLeft$rect$w/2, LegendLeft$text$y,
          c(rep(" ",MarkerI),
            paste0(Marker_NameI,": ",signif(mean(LeftCountsPerImage_MarkerI),3)," (+/- ",signif(sd(LeftCountsPerImage_MarkerI),3),") ; n = ",length(LeftCountsPerImage_MarkerI)),
-           rep(" ",(nlevels(OutputDataI$Marker_Name))-MarkerI)
+           rep(" ",(nlevels(OutputDataI$Marker_Name_x_Channel))-MarkerI)
            
          ),
          cex=0.5, col=BlueToRedPalette(NbMarkers,1)[MarkerI]
@@ -951,7 +1046,7 @@ for (SubjectI in 1:nlevels(OutputData$Subject_ID)){
     text(LegendRight$rect$left + LegendRight$rect$w/2, LegendRight$text$y,
          c(rep(" ",MarkerI),
            paste0(Marker_NameI,": ",signif(mean(RightCountsPerImage_MarkerI),3)," (+/- ",signif(sd(RightCountsPerImage_MarkerI),3),") ; n = ",length(RightCountsPerImage_MarkerI)),
-           rep(" ",(nlevels(OutputDataI$Marker_Name))-MarkerI)
+           rep(" ",(nlevels(OutputDataI$Marker_Name_x_Channel))-MarkerI)
          ),
          cex=0.5, col=BlueToRedPalette(NbMarkers,1)[MarkerI]
     )
@@ -982,9 +1077,9 @@ for (SubjectI in 1:nlevels(OutputData$Subject_ID)){
   }
   
   ## Make the Density Plot per Subject per Marker and SAVE it
-  for(MarkerI in 1:nlevels(OutputDataI$Marker_Name)){
-    Marker_NameI<-levels(OutputDataI$Marker_Name)[MarkerI]
-    OutputDataI_MarkerI<-OutputDataI[OutputDataI$Marker_Name==Marker_NameI,]
+  for(MarkerI in 1:nlevels(OutputDataI$Marker_Name_x_Channel)){
+    Marker_NameI<-levels(OutputDataI$Marker_Name_x_Channel)[MarkerI]
+    OutputDataI_MarkerI<-OutputDataI[OutputDataI$Marker_Name_x_Channel==Marker_NameI,]
     if(dim(OutputDataI_MarkerI)[1]>2){
     #   hDensity=c( bandwidth.nrd( c( (-max(abs(OutputDataI_MarkerI$X_Scaled))), (max(abs(OutputDataI_MarkerI$X_Scaled))) )),
     #       bandwidth.nrd( c( (-max(abs(OutputDataI_MarkerI$Y_Scaled))), (max(abs(OutputDataI_MarkerI$Y_Scaled))) )))
@@ -1010,10 +1105,10 @@ for (SubjectI in 1:nlevels(OutputData$Subject_ID)){
   par(xpd=TRUE)
   Xlim=round(max(abs(c(mean(OutputDataI$LE_L_X_Scaled),mean(OutputDataI$LE_R_X_Scaled),max(abs(OutputDataI$X_Scaled))))),2)
   Ylim=round(max(abs(c(mean(OutputDataI$DE_L_Y_Scaled),mean(OutputDataI$DE_R_Y_Scaled),mean(OutputDataI$VE_L_Y_Scaled),mean(OutputDataI$VE_R_Y_Scaled), max(abs(OutputDataI$Y_Scaled))))),2)
-  NbMarkers=nlevels(OutputDataI$Marker_Name)
+  NbMarkers=nlevels(OutputDataI$Marker_Name_x_Channel)
   plot(OutputDataI$X_Scaled, OutputDataI$Y_Scaled,
        type="p", bty="n",
-       pch=1,lwd=0.5, cex=0.5, col=BlueToRedPalette(NbMarkers,1)[OutputDataI$Marker_Name],
+       pch=1,lwd=0.5, cex=0.5, col=BlueToRedPalette(NbMarkers,1)[OutputDataI$Marker_Name_x_Channel],
        xlim=c(-Xlim,Xlim), ylim=c(-Ylim,Ylim),
        xaxp=c(-Xlim,Xlim,4), yaxp=c(-Ylim,Ylim,4),
        main=Subject_IDI,
@@ -1044,7 +1139,7 @@ for (SubjectI in 1:nlevels(OutputData$Subject_ID)){
          pch=1, cex=0.5,
          col=BlueToRedPalette(NbMarkers,1),
          title="Marker",
-         legend=levels(OutputDataI$Marker_Name),
+         legend=levels(OutputDataI$Marker_Name_x_Channel),
          xjust = 0.5, yjust = 0.5
   )
   
@@ -1053,7 +1148,7 @@ for (SubjectI in 1:nlevels(OutputData$Subject_ID)){
          lty=1, cex=0.5, lwd=0.5,
          col=BlueToRedPalette(NbMarkers,1),
          title="Density",
-         legend=levels(OutputDataI$Marker_Name),
+         legend=levels(OutputDataI$Marker_Name_x_Channel),
          xjust = 0.5, yjust = 0.5
   )
   
@@ -1064,12 +1159,12 @@ for (SubjectI in 1:nlevels(OutputData$Subject_ID)){
                       cex=0.5,
                       col="black",
                       title="Nb Of Cells",
-                      legend=c(" ", rep(" ",nlevels(OutputDataI$Marker_Name))),
+                      legend=c(" ", rep(" ",nlevels(OutputDataI$Marker_Name_x_Channel))),
                       text.width = strwidth("Marker: Left + Right = Total")
   )
   
   text(LegendTop$rect$left + LegendTop$rect$w/2, LegendTop$text$y,
-       c("Marker: Left + Right = Total",rep(" ",nlevels(OutputDataI$Marker_Name))),
+       c("Marker: Left + Right = Total",rep(" ",nlevels(OutputDataI$Marker_Name_x_Channel))),
        cex=0.5)
   
   LegendLeft <- legend("topleft",
@@ -1080,11 +1175,11 @@ for (SubjectI in 1:nlevels(OutputData$Subject_ID)){
                        col="black",
                        title="Left Side Counts",
                        text.width = strwidth("Marker: Avg Cell/Section (+/- StDev) ; n Sections")/2,
-                       legend=c(" ", rep(" ",nlevels(OutputDataI$Marker_Name)))
+                       legend=c(" ", rep(" ",nlevels(OutputDataI$Marker_Name_x_Channel)))
   )
   
   text(LegendLeft$rect$left + LegendLeft$rect$w/2, LegendLeft$text$y,
-       c("Marker: Avg Cell/Section (+/- StDev) ; n Sections",rep(" ",nlevels(OutputDataI$Marker_Name))),
+       c("Marker: Avg Cell/Section (+/- StDev) ; n Sections",rep(" ",nlevels(OutputDataI$Marker_Name_x_Channel))),
        cex=0.5)
   
   LegendRight <- legend("topright",
@@ -1095,10 +1190,10 @@ for (SubjectI in 1:nlevels(OutputData$Subject_ID)){
                         col="black",
                         title="Right Side Counts",
                         text.width = strwidth("Avg Cell/Section (+/- SD) ; n Sections")/2,
-                        legend=c(" ", rep(" ",nlevels(OutputDataI$Marker_Name)))
+                        legend=c(" ", rep(" ",nlevels(OutputDataI$Marker_Name_x_Channel)))
   )
   text(LegendRight$rect$left + LegendRight$rect$w/2, LegendRight$text$y,
-       c("Marker: Avg Cell/Section (+/- StDev) ; n Sections",rep(" ",nlevels(OutputDataI$Marker_Name))),
+       c("Marker: Avg Cell/Section (+/- StDev) ; n Sections",rep(" ",nlevels(OutputDataI$Marker_Name_x_Channel))),
        cex=0.5)
   
   
@@ -1106,9 +1201,9 @@ for (SubjectI in 1:nlevels(OutputData$Subject_ID)){
   
   
   # Add Counts for each Marker
-  for(MarkerI in 1:nlevels(OutputDataI$Marker_Name)){
-    Marker_NameI<-levels(OutputDataI$Marker_Name)[MarkerI]
-    OutputDataI_MarkerI<-OutputDataI[OutputDataI$Marker_Name==Marker_NameI,]
+  for(MarkerI in 1:nlevels(OutputDataI$Marker_Name_x_Channel)){
+    Marker_NameI<-levels(OutputDataI$Marker_Name_x_Channel)[MarkerI]
+    OutputDataI_MarkerI<-OutputDataI[OutputDataI$Marker_Name_x_Channel==Marker_NameI,]
     NbImages<-length(levels(OutputDataI$File_ID))
     LeftCountsPerImage_MarkerI<-c()
     RightCountsPerImage_MarkerI<-c()
@@ -1117,8 +1212,8 @@ for (SubjectI in 1:nlevels(OutputData$Subject_ID)){
       DataImageI<-OutputDataI[OutputDataI$File_ID==Image_IDI,]
       LeftDataImageI<-DataImageI[DataImageI$X_Scaled<0,]
       RightDataImageI<-DataImageI[DataImageI$X_Scaled>=0,]
-      LeftDataImageI_MarkerI<-LeftDataImageI[LeftDataImageI$Marker_Name==Marker_NameI,]
-      RightDataImageI_MarkerI<-RightDataImageI[RightDataImageI$Marker_Name==Marker_NameI,]
+      LeftDataImageI_MarkerI<-LeftDataImageI[LeftDataImageI$Marker_Name_x_Channel==Marker_NameI,]
+      RightDataImageI_MarkerI<-RightDataImageI[RightDataImageI$Marker_Name_x_Channel==Marker_NameI,]
       LeftCountsPerImage_MarkerI<-c(LeftCountsPerImage_MarkerI,dim(LeftDataImageI_MarkerI)[1])
       RightCountsPerImage_MarkerI<-c(RightCountsPerImage_MarkerI,dim(RightDataImageI_MarkerI)[1])
     }
@@ -1131,14 +1226,14 @@ for (SubjectI in 1:nlevels(OutputData$Subject_ID)){
     text(LegendTop$rect$left + LegendTop$rect$w/2, LegendTop$text$y,
          c(rep(" ",MarkerI),
            paste0(Marker_NameI,": " ,LeftCountOutputDataI_MarkerI," + ",RightCountOutputDataI_MarkerI," = ",TotalCountOutputDataI_MarkerI),
-           rep(" ",(nlevels(OutputDataI$Marker_Name))-MarkerI)
+           rep(" ",(nlevels(OutputDataI$Marker_Name_x_Channel))-MarkerI)
          ),
          cex=0.5, col=BlueToRedPalette(NbMarkers,1)[MarkerI]
     )
     text(LegendLeft$rect$left + LegendLeft$rect$w/2, LegendLeft$text$y,
          c(rep(" ",MarkerI),
            paste0(Marker_NameI,": ",signif(mean(LeftCountsPerImage_MarkerI),3)," (+/- ",signif(sd(LeftCountsPerImage_MarkerI),3),") ; n = ",length(LeftCountsPerImage_MarkerI)),
-           rep(" ",(nlevels(OutputDataI$Marker_Name))-MarkerI)
+           rep(" ",(nlevels(OutputDataI$Marker_Name_x_Channel))-MarkerI)
          ),
          cex=0.5, col=BlueToRedPalette(NbMarkers,1)[MarkerI]
     )
@@ -1146,7 +1241,7 @@ for (SubjectI in 1:nlevels(OutputData$Subject_ID)){
     text(LegendRight$rect$left + LegendRight$rect$w/2, LegendRight$text$y,
          c(rep(" ",MarkerI),
            paste0(Marker_NameI,": ",signif(mean(RightCountsPerImage_MarkerI),3)," (+/- ",signif(sd(RightCountsPerImage_MarkerI),3),") ; n = ",length(RightCountsPerImage_MarkerI)),
-           rep(" ",(nlevels(OutputDataI$Marker_Name))-MarkerI)
+           rep(" ",(nlevels(OutputDataI$Marker_Name_x_Channel))-MarkerI)
            ),
          cex=0.5, col=BlueToRedPalette(NbMarkers,1)[MarkerI]
     )
@@ -1198,9 +1293,9 @@ for (SubjectI in 1:nlevels(OutputData$Subject_ID)){
   
   
   # Plot Filled Density for each subject and each Marker
-  for(MarkerI in 1:nlevels(OutputDataI$Marker_Name)){
-    Marker_NameI<-levels(OutputDataI$Marker_Name)[MarkerI]
-    OutputDataI_MarkerI<-OutputDataI[OutputDataI$Marker_Name==Marker_NameI,]
+  for(MarkerI in 1:nlevels(OutputDataI$Marker_Name_x_Channel)){
+    Marker_NameI<-levels(OutputDataI$Marker_Name_x_Channel)[MarkerI]
+    OutputDataI_MarkerI<-OutputDataI[OutputDataI$Marker_Name_x_Channel==Marker_NameI,]
     NbImages<-length(levels(OutputDataI$File_ID))
     LeftCountsPerImage_MarkerI<-c()
     RightCountsPerImage_MarkerI<-c()
@@ -1209,8 +1304,8 @@ for (SubjectI in 1:nlevels(OutputData$Subject_ID)){
       DataImageI<-OutputDataI[OutputDataI$File_ID==Image_IDI,]
       LeftDataImageI<-DataImageI[DataImageI$X_Scaled<0,]
       RightDataImageI<-DataImageI[DataImageI$X_Scaled>=0,]
-      LeftDataImageI_MarkerI<-LeftDataImageI[LeftDataImageI$Marker_Name==Marker_NameI,]
-      RightDataImageI_MarkerI<-RightDataImageI[RightDataImageI$Marker_Name==Marker_NameI,]
+      LeftDataImageI_MarkerI<-LeftDataImageI[LeftDataImageI$Marker_Name_x_Channel==Marker_NameI,]
+      RightDataImageI_MarkerI<-RightDataImageI[RightDataImageI$Marker_Name_x_Channel==Marker_NameI,]
       LeftCountsPerImage_MarkerI<-c(LeftCountsPerImage_MarkerI,dim(LeftDataImageI_MarkerI)[1])
       RightCountsPerImage_MarkerI<-c(RightCountsPerImage_MarkerI,dim(RightDataImageI_MarkerI)[1])
     }
