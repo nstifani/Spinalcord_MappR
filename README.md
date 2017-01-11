@@ -20,7 +20,6 @@ It can prompt to select the Marker Information Created by Manual Cell Detection 
 
 
 To do List
-- Process Hemicord separately
 - Add weighted density
 
 - Get inspired by FACS data analysis

@@ -999,31 +999,37 @@ for (SubjectI in 1:nlevels(OutputData$Subject_ID)){
     dir.create(file.path(OutputDirPath, "Tables by Subject","Density Normalized"))
   }
   
-  ## Make the Density Plot per Subject per Marker and SAVE it
+  ## Calculate and SAVE the Density RAW and Normalized per Subject per Marker
   for(MarkerI in 1:nlevels(OutputDataI$Marker_Name_x_Channel)){
     Marker_NameI<-levels(OutputDataI$Marker_Name_x_Channel)[MarkerI]
     OutputDataI_MarkerI<-OutputDataI[OutputDataI$Marker_Name_x_Channel==Marker_NameI,]
-    if(dim(OutputDataI_MarkerI)[1]>2){
-    #   hDensity=c( bandwidth.nrd( c( (-max(abs(OutputDataI_MarkerI$X_Scaled))), (max(abs(OutputDataI_MarkerI$X_Scaled))) )),
-    #       bandwidth.nrd( c( (-max(abs(OutputDataI_MarkerI$Y_Scaled))), (max(abs(OutputDataI_MarkerI$Y_Scaled))) )))
-    # } else {
-    #   hDensity=c( bandwidth.nrd( OutputDataI_MarkerI$X_Scaled), bandwidth.nrd( OutputDataI_MarkerI$Y_Scaled))
-    # }
+    OutputDataI_MarkerI_Left<-OutputDataI_MarkerI[OutputDataI_MarkerI$X_Scaled<0,]
+    OutputDataI_MarkerI_Right<-OutputDataI_MarkerI[OutputDataI_MarkerI$X_Scaled>=0,]
     
-    Density_OutputDataI_MarkerI<-kde2d(OutputDataI_MarkerI$X_Scaled, OutputDataI_MarkerI$Y_Scaled,
-                                     #  h=hDensity,
-                                       n=100, lims=c(-1.5,1.5,-1.5,1.5))
-    write.table(Density_OutputDataI_MarkerI, file=file.path(OutputDirPath, "Tables by Subject", "Density Raw",paste0(Subject_IDI,"_",Marker_NameI,".csv")), row.names=FALSE, sep = ",")
-    Normalized_Density_OutputDataI_MarkerI<-Density_OutputDataI_MarkerI
-    Normalized_Density_OutputDataI_MarkerI$z<- ((Density_OutputDataI_MarkerI$z-min(Density_OutputDataI_MarkerI$z))/(max(Density_OutputDataI_MarkerI$z)-min(Density_OutputDataI_MarkerI$z)))
-    write.table(Normalized_Density_OutputDataI_MarkerI, file=file.path(OutputDirPath, "Tables by Subject", "Density Normalized",paste0(Subject_IDI,"_",Marker_NameI,".csv")), row.names=FALSE, sep = ",")
-  } # and of If
+    # Process Left Density
+    if(dim(OutputDataI_MarkerI_Left)[1]>2){
+    Density_OutputDataI_MarkerI_Left<-kde2d(OutputDataI_MarkerI_Left$X_Scaled, OutputDataI_MarkerI_Left$Y_Scaled,
+                                   n=100, lims=c(-1.5,1.5,-1.5,1.5))
+    write.table(Density_OutputDataI_MarkerI_Left, file=file.path(OutputDirPath, "Tables by Subject", "Density Raw",paste0(Subject_IDI,"_",Marker_NameI,"_Left.csv")), row.names=FALSE, sep = ",")
+    Normalized_Density_OutputDataI_MarkerI_Left<-Density_OutputDataI_MarkerI_Left
+    Normalized_Density_OutputDataI_MarkerI_Left$z<- ((Normalized_Density_OutputDataI_MarkerI_Left$z-min(Normalized_Density_OutputDataI_MarkerI_Left$z))/(max(Normalized_Density_OutputDataI_MarkerI_Left$z)-min(Normalized_Density_OutputDataI_MarkerI_Left$z)))
+    write.table(Normalized_Density_OutputDataI_MarkerI_Left, file=file.path(OutputDirPath, "Tables by Subject", "Density Normalized",paste0(Subject_IDI,"_",Marker_NameI,"_Left.csv")), row.names=FALSE, sep = ",")
+  } # and of If process Left
+    # Process Left Density
+    if(dim(OutputDataI_MarkerI_Right)[1]>2){
+      Density_OutputDataI_MarkerI_Right<-kde2d(OutputDataI_MarkerI_Right$X_Scaled, OutputDataI_MarkerI_Right$Y_Scaled,
+                                              n=100, lims=c(-1.5,1.5,-1.5,1.5))
+      write.table(Density_OutputDataI_MarkerI_Right, file=file.path(OutputDirPath, "Tables by Subject", "Density Raw",paste0(Subject_IDI,"_",Marker_NameI,"_Right.csv")), row.names=FALSE, sep = ",")
+      Normalized_Density_OutputDataI_MarkerI_Right<-Density_OutputDataI_MarkerI_Right
+      Normalized_Density_OutputDataI_MarkerI_Right$z<- ((Normalized_Density_OutputDataI_MarkerI_Right$z-min(Normalized_Density_OutputDataI_MarkerI_Right$z))/(max(Normalized_Density_OutputDataI_MarkerI_Right$z)-min(Normalized_Density_OutputDataI_MarkerI_Right$z)))
+      write.table(Normalized_Density_OutputDataI_MarkerI_Right, file=file.path(OutputDirPath, "Tables by Subject", "Density Normalized",paste0(Subject_IDI,"_",Marker_NameI,"_Right.csv")), row.names=FALSE, sep = ",")
+    } # and of If process Left
+    
   } # end of marker I
   
   
   
   # Plot SCALED coordinates for each SUBJECT and ADD THE CONTOURS
- 
   cairo_pdf(file.path(OutputDirPath, "Graphs by Subject", "Contours", paste0(Subject_IDI,"_Contours_Normalized_Graph.pdf"))) # Open the graph as pdf
   par(xpd=TRUE)
   Xlim=round(max(abs(c(mean(OutputDataI$LE_L_X_Scaled),mean(OutputDataI$LE_R_X_Scaled),max(abs(OutputDataI$X_Scaled))))),2)
@@ -1170,27 +1176,35 @@ for (SubjectI in 1:nlevels(OutputData$Subject_ID)){
     )
     
     
-    ###Calculate the Density for each MarkerI and add the contour
-    if(dim(OutputDataI_MarkerI)[1]>2){
-    #   hDensity=c( bandwidth.nrd( c( (-max(abs(OutputDataI_MarkerI$X_Scaled))), (max(abs(OutputDataI_MarkerI$X_Scaled))) )),
-    #               bandwidth.nrd( c( (-max(abs(OutputDataI_MarkerI$Y_Scaled))), (max(abs(OutputDataI_MarkerI$Y_Scaled))) )))
-    # } else {
-    #   hDensity=c( bandwidth.nrd( OutputDataI_MarkerI$X_Scaled), bandwidth.nrd( OutputDataI_MarkerI$Y_Scaled))
-    # }
-    
-    Density_OutputDataI_MarkerI<-kde2d(OutputDataI_MarkerI$X_Scaled, OutputDataI_MarkerI$Y_Scaled,
-                                     #  h=hDensity,
-                                       n=100, lims=c(-1.5,1.5,-1.5,1.5))
-    
-    
-    Normalized_Density_OutputDataI_MarkerI<-Density_OutputDataI_MarkerI
-    Normalized_Density_OutputDataI_MarkerI$z<- ((Density_OutputDataI_MarkerI$z-min(Density_OutputDataI_MarkerI$z))/(max(Density_OutputDataI_MarkerI$z)-min(Density_OutputDataI_MarkerI$z)))
-    contour(Normalized_Density_OutputDataI_MarkerI,
+    ### ADD THE CONTOURS
+    OutputDataI_MarkerI_Left<-OutputDataI_MarkerI[OutputDataI_MarkerI$X_Scaled<0,]
+    OutputDataI_MarkerI_Right<-OutputDataI_MarkerI[OutputDataI_MarkerI$X_Scaled>=0,]
+    ### The Left
+    if(dim(OutputDataI_MarkerI_Left)[1]>2){
+    Density_OutputDataI_MarkerI_Left<-kde2d(OutputDataI_MarkerI_Left$X_Scaled, OutputDataI_MarkerI_Left$Y_Scaled,
+                                     n=100, lims=c(-1.5,1.5,-1.5,1.5))
+    Normalized_Density_OutputDataI_MarkerI_left<-Density_OutputDataI_MarkerI_Left
+    Normalized_Density_OutputDataI_MarkerI_left$z<- ((Density_OutputDataI_MarkerI_Left$z-min(Density_OutputDataI_MarkerI_Left$z))/(max(Density_OutputDataI_MarkerI_Left$z)-min(Density_OutputDataI_MarkerI_Left$z)))
+    contour(Normalized_Density_OutputDataI_MarkerI_left,
             add = TRUE, drawlabels = FALSE,
             lty=1, lwd=0.5,
             col=BlueToRedPalette(NbMarkers,1)[MarkerI],
             zlim = c(0,1), nlevels = 10) # add the contours
     } # end of if
+    
+    ### The Right
+    if(dim(OutputDataI_MarkerI_Right)[1]>2){
+      Density_OutputDataI_MarkerI_Right<-kde2d(OutputDataI_MarkerI_Right$X_Scaled, OutputDataI_MarkerI_Right$Y_Scaled,
+                                              n=100, lims=c(-1.5,1.5,-1.5,1.5))
+      Normalized_Density_OutputDataI_MarkerI_Right<-Density_OutputDataI_MarkerI_Right
+      Normalized_Density_OutputDataI_MarkerI_Right$z<- ((Density_OutputDataI_MarkerI_Right$z-min(Density_OutputDataI_MarkerI_Right$z))/(max(Density_OutputDataI_MarkerI_Right$z)-min(Density_OutputDataI_MarkerI_Right$z)))
+      contour(Normalized_Density_OutputDataI_MarkerI_Right,
+              add = TRUE, drawlabels = FALSE,
+              lty=1, lwd=0.5,
+              col=BlueToRedPalette(NbMarkers,1)[MarkerI],
+              zlim = c(0,1), nlevels = 10) # add the contours
+    } # end of if
+    
     
   }## End of for Marker I
   par(xpd=FALSE)
@@ -1215,7 +1229,7 @@ for (SubjectI in 1:nlevels(OutputData$Subject_ID)){
   
   
   
-  # Plot Filled Density for each subject and each Marker
+  # Plot Filled Density for each subject and each Marker Left and Right separately
   for(MarkerI in 1:nlevels(OutputDataI$Marker_Name_x_Channel)){
     Marker_NameI<-levels(OutputDataI$Marker_Name_x_Channel)[MarkerI]
     OutputDataI_MarkerI<-OutputDataI[OutputDataI$Marker_Name_x_Channel==Marker_NameI,]
@@ -1236,24 +1250,12 @@ for (SubjectI in 1:nlevels(OutputData$Subject_ID)){
     LeftCountOutputDataI_MarkerI<-dim(OutputDataI_MarkerI[OutputDataI_MarkerI$X_Scaled<0,])[1]
     RightCountOutputDataI_MarkerI<-dim(OutputDataI_MarkerI[OutputDataI_MarkerI$X_Scaled>=0,])[1]
     
-    ###Calculate the Density for each MarkerI and add the contour
-    if(dim(OutputDataI_MarkerI)[1]>2){
-    #   hDensity=c( bandwidth.nrd( c( (-max(abs(OutputDataI_MarkerI$X_Scaled))), (max(abs(OutputDataI_MarkerI$X_Scaled))) )),
-    #               bandwidth.nrd( c( (-max(abs(OutputDataI_MarkerI$Y_Scaled))), (max(abs(OutputDataI_MarkerI$Y_Scaled))) )))
-    # } else {
-    #   hDensity=c( bandwidth.nrd( OutputDataI_MarkerI$X_Scaled), bandwidth.nrd( OutputDataI_MarkerI$Y_Scaled))
-    # }
+    OutputDataI_MarkerI_Left<-OutputDataI_MarkerI[OutputDataI_MarkerI$X_Scaled<0,]
+    OutputDataI_MarkerI_Right<-OutputDataI_MarkerI[OutputDataI_MarkerI$X_Scaled>=0,]
     
-    Density_OutputDataI_MarkerI<-kde2d(OutputDataI_MarkerI$X_Scaled, OutputDataI_MarkerI$Y_Scaled,
-                                     #  h=hDensity,
-                                       n=100, lims=c(-1.5,1.5,-1.5,1.5))
-    Normalized_Density_OutputDataI_MarkerI<-Density_OutputDataI_MarkerI
-    Normalized_Density_OutputDataI_MarkerI$z<- ((Density_OutputDataI_MarkerI$z-min(Density_OutputDataI_MarkerI$z))/(max(Density_OutputDataI_MarkerI$z)-min(Density_OutputDataI_MarkerI$z)))
-    
+ 
     cairo_pdf(file.path(OutputDirPath, "Graphs by Subject", "Filled Density", paste0(Subject_IDI,"_",Marker_NameI,"_Filled_Density_Graph.pdf"))) # Open the graph as pdf
     par(xpd=TRUE)
-    
-    
     Xlim=round(max(abs(c(mean(OutputDataI$LE_L_X_Scaled),mean(OutputDataI$LE_R_X_Scaled),max(abs(OutputDataI$X_Scaled))))),2)
     Ylim=round(max(abs(c(mean(OutputDataI$DE_L_Y_Scaled),mean(OutputDataI$DE_R_Y_Scaled),mean(OutputDataI$VE_L_Y_Scaled),mean(OutputDataI$VE_R_Y_Scaled), max(abs(OutputDataI$Y_Scaled))))),2)
 
@@ -1276,11 +1278,35 @@ for (SubjectI in 1:nlevels(OutputData$Subject_ID)){
            
          }
     )
-    .filled.contour(Normalized_Density_OutputDataI_MarkerI$x,
-                    Normalized_Density_OutputDataI_MarkerI$y,
-                    Normalized_Density_OutputDataI_MarkerI$z,
+    
+    ###Calculate the Density for each MarkerI and add the contour
+    if(dim(OutputDataI_MarkerI_Left)[1]>2){
+      Density_OutputDataI_MarkerI_Left<-kde2d(OutputDataI_MarkerI_Left$X_Scaled, OutputDataI_MarkerI_Left$Y_Scaled,
+                                              n=100, lims=c(-1.5,1.5,-1.5,1.5))
+      Normalized_Density_OutputDataI_MarkerI_Left<-Density_OutputDataI_MarkerI_Left
+      Normalized_Density_OutputDataI_MarkerI_Left$z<- ((Density_OutputDataI_MarkerI_Left$z-min(Density_OutputDataI_MarkerI_Left$z))/(max(Density_OutputDataI_MarkerI_Left$z)-min(Density_OutputDataI_MarkerI_Left$z)))
+      .filled.contour(Normalized_Density_OutputDataI_MarkerI_Left$x,
+                    Normalized_Density_OutputDataI_MarkerI_Left$y,
+                    Normalized_Density_OutputDataI_MarkerI_Left$z,
                     levels = seq(from=0, to=1, by=1/21), col=c(rgb(red=1,green=1,blue=1,alpha=0), BlueToRedPalette(20,0.5))
     )
+    }
+    ###Calculate the Density for each MarkerI and add the contour
+    if(dim(OutputDataI_MarkerI_Right)[1]>2){
+      Density_OutputDataI_MarkerI_Right<-kde2d(OutputDataI_MarkerI_Right$X_Scaled, OutputDataI_MarkerI_Right$Y_Scaled,
+                                              n=100, lims=c(-1.5,1.5,-1.5,1.5))
+      Normalized_Density_OutputDataI_MarkerI_Right<-Density_OutputDataI_MarkerI_Right
+      Normalized_Density_OutputDataI_MarkerI_Right$z<- ((Density_OutputDataI_MarkerI_Right$z-min(Density_OutputDataI_MarkerI_Right$z))/(max(Density_OutputDataI_MarkerI_Right$z)-min(Density_OutputDataI_MarkerI_Right$z)))
+      .filled.contour(Normalized_Density_OutputDataI_MarkerI_Right$x,
+                      Normalized_Density_OutputDataI_MarkerI_Right$y,
+                      Normalized_Density_OutputDataI_MarkerI_Right$z,
+                      levels = seq(from=0, to=1, by=1/21), col=c(rgb(red=1,green=1,blue=1,alpha=0), BlueToRedPalette(20,0.5))
+      )
+    }
+    
+    
+    
+    
     points(mean(OutputDataI$CC_X_Scaled),mean(OutputDataI$CC_Y_Scaled), col="black", pch=3, cex=0.5)
     points(mean(OutputDataI$DE_R_X_Scaled),mean(OutputDataI$DE_R_Y_Scaled), col="black", pch=3, cex=0.5)
     points(mean(OutputDataI$LE_R_X_Scaled),mean(OutputDataI$LE_R_Y_Scaled), col="black", pch=3, cex=0.5)
@@ -1328,72 +1354,8 @@ for (SubjectI in 1:nlevels(OutputData$Subject_ID)){
       points(OutputDataI_MarkerI$X_Scaled, OutputDataI_MarkerI$Y_Scaled,
              pch=1,lwd=0.5, cex=0.5,
              col="black")
-      
-   
-   
-    
-         # filled.contour(Normalized_Density_OutputDataI_MarkerI,
-         #           xlim=c(-Xlim,Xlim), ylim=c(-Ylim,Ylim), zlim = c(0,1),
-         #           nlevels = 21, col=c("#FFFFFF", BlueToRedPalette(20))
-         #                           ,plot.title={
-         #             title(main=paste0(Subject_IDI,"_", Marker_NameI),cex=0.8,
-         #                   ylab="Relative position to CC (Scaled)",
-         #                   xlab="Relative position to CC (Scaled)");
-         #             
-         #             
-         #             LegendLeft <- legend("topleft", legend = c(" "),inset=c(-0,-0.075),
-         #                                  xjust =0, yjust = 0,
-         #                                  title = "Avg Cell/Section (+/- SD) ; n Sections", cex=0.7, bty="n");
-         #             
-         #             text(LegendLeft$rect$left + LegendLeft$rect$w/2, LegendLeft$text$y,
-         #                  c( paste0(signif(mean(LeftCountsPerImage_MarkerI),3)," (+/- ",signif(sd(LeftCountsPerImage_MarkerI),3),") ; n = ",length(LeftCountsPerImage_MarkerI))),
-         #                  cex=0.7);
-         #             
-         #             LegendRight <- legend("topright", legend = c(" "),inset=c(-0,-0.075),
-         #                                   xjust =0, yjust = 0,
-         #                                   title = "Avg Cell/Section (+/- SD) ; n Sections", cex=0.7, bty="n");
-         #             
-         #             text(LegendRight$rect$left + LegendRight$rect$w/2, LegendRight$text$y,
-         #                  c( paste0(signif(mean(RightCountsPerImage_MarkerI),3)," (+/- ",signif(sd(RightCountsPerImage_MarkerI),3),") ; n = ",length(RightCountsPerImage_MarkerI))),
-         #                  cex=0.7);
-         #             
-         #             LegendBottom <- legend("bottom", legend = c(" ", " "),
-         #                                    text.width = strwidth("Left + Right = Total"),
-         #                                    xjust = 0.5, yjust = 0.5,
-         #                                    title = "Nb of Cells", cex=0.7, bty="n");
-         #             text(LegendBottom$rect$left + LegendBottom$rect$w/2, LegendBottom$text$y,
-         #                  c("Left + Right = Total",""), cex=0.7);
-         #             text(LegendBottom$rect$left + LegendBottom$rect$w/2, LegendBottom$text$y,
-         #                  c("",paste0(LeftCountOutputDataI_MarkerI," + ",RightCountOutputDataI_MarkerI," = ",TotalCountOutputDataI_MarkerI)),
-         #                  cex=0.7);
-         #             legend("bottomleft", title="Marker",
-         #                    legend=levels(OutputDataI_MarkerI$Marker_Name),bty="n",
-         #                    col=1:length(OutputDataI_MarkerI$Marker_Name),
-         #                    pch=1, cex=0.5)
-         #             
-         #           },
-         #           key.title=title(main = "Normalized\nCell Density", sub=Marker_NameI, cex.main=0.7, cex.sub=0.7),
-         #           frame.plot=FALSE, axes=TRUE,
-         #           key.axes=axis(4,seq(0,1,by=0.2)),
-         #           plot.axes = {axis(1); axis(2);
-         #             par(xpd=FALSE)
-         #             abline(v=0, lty=1, lwd=0.5, col="grey");
-         #             abline(h=0, lty=1, lwd=0.5, col="grey");
-         #             par(xpd=TRUE)
-         #             points(OutputDataI_MarkerI$X_Scaled, OutputDataI_MarkerI$Y_Scaled,
-         #                    pch=1,lwd=0.5, cex=0.5,
-         #                    col="black"
-         #             )
-         #           }
-         # 
-         #           )
-         
-    
-         
-         
-    dev.off()
-    } # end of If
-  }## End of for Marker I
+              dev.off()
+    }## End of for Marker I
   
   
   
