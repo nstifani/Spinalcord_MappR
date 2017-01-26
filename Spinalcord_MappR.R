@@ -31,39 +31,39 @@ ErrorDialog.Function<-function(ErrorMessage, FixMessage){
   }
 }
 
-# Function to select a directory containing CSV file with only one . in their file name
-SelectCSVDir.Function <- function(DialogMessage, DirPathObjectName, DirNameObjectName, ListFilePathObjectName, ParentDirPathObjectName){
-  CSVDirPass=0
+# Function to select a directory containing  file with only one . in their file name and the FileExt as a file extension
+SelectInputDir.Function <- function(DialogMessage, DirPathObjectName, DirNameObjectName, ListFilePathObjectName, ParentDirPathObjectName, FileEXT){
+  InputDirPass=0
   
-  while(CSVDirPass!=1){
+  while(InputDirPass!=1){
     DirPath<-tk_choose.dir(default=getwd(), caption=DialogMessage) # Prompt the user to select an inputdirectory
     DirName<-basename(DirPath) # Defines Name of Input directory
-    ListFilePath<-list.files(path=DirPath, pattern=".csv", all.files=FALSE, full.names=TRUE, ignore.case = TRUE) # Get the list of CSV filepath within InputDir
+    ListFilePath<-list.files(path=DirPath, pattern=paste0(".",FileEXT), all.files=FALSE, full.names=TRUE, ignore.case = TRUE) # Get the list of TXT filepath within InputDir
     
     if(length(ListFilePath)==0){
-      ErrorMessageInputFile=paste0("Sorry, the folder ",DirName," does not contain any .CSV file.")
-      FixMessageInputFile="Please select a folder containing at least one CSV file."
+      ErrorMessageInputFile=paste0("Sorry, the folder ",DirName," does not contain any ", FileEXT," file.")
+      FixMessageInputFile=paste0("Please select a folder containing at least one ",FileEXT," file.")
       ErrorDialog.Function(ErrorMessage=ErrorMessageInputFile, FixMessage=FixMessageInputFile)
-      NbCSVFilePass=0
+      NbFilePass=0
     } else {
-      NbCSVFilePass=1
+      NbFilePass=1
     }
     if(length(ListFilePath)>0){
-      NameCSVFilePass=1
-      for(CSVFileI in 1: length(ListFilePath)){ ## Screen all CSV files to make sure they have only one .
-        FilePathCSVFileI <- ListFilePath[CSVFileI]
-        FilenameCSVFileI <- basename(FilePathCSVFileI)
-        FilenameCSVFileIComponents <- unlist(strsplit(as.character(FilenameCSVFileI),".", fixed=TRUE))
-        if(length(FilenameCSVFileIComponents)!=2){ # If more than one . make an error
-          NameCSVFilePass=0
-          ErrorMessageInputFile=paste0("Sorry, the file ",FilenameCSVFileI," contains more than one \".\" character.")
-          FixMessageInputFile="Please ensure that all CSV File contain only one \".\" for the file extension."
-          ErrorDialog.Function(ErrorMessage=paste0("Sorry ",FilenameCSVFileI," contains more than one \".\" character."), FixMessage="Please ensure that all CSV File contain only one \".\" for the file extension.")
+      FilenamePass=1
+      for(FileI in 1:length(ListFilePath)){ ## Screen all files to make sure they have only one .
+        FilePathFileI <- ListFilePath[FileI]
+        FilenameFileI <- basename(FilePathFileI)
+        FilenameFileIComponents <- unlist(strsplit(as.character(FilenameFileI),".", fixed=TRUE))
+        if(length(FilenameFileIComponents)!=2){ # If more than one . make an error
+          FilenamePass=0
+          ErrorMessageInputFile=paste0("Sorry, the file ",FilenameFileI," contains more than one \".\" character.")
+          FixMessageInputFile="Please ensure that all Files contain only one \".\" for the file extension."
+          ErrorDialog.Function(ErrorMessage=ErrorMessageInputFile, FixMessage=FixMessageInputFile)
         }
       }
     }
-    if(NbCSVFilePass==1 && NameCSVFilePass==1){
-      CSVDirPass=1
+    if(NbFilePass==1 && FilenamePass==1){
+      InputDirPass=1
     }
   }
   assign(DirPathObjectName, DirPath, envir = .GlobalEnv) # Assign the Variable to the global environment
@@ -81,16 +81,16 @@ SelectDir.Function <- function(DialogMessage, DirPathObjectName, DirNameObjectNa
   assign(ParentDirPathObjectName, dirname(DirPath), envir = .GlobalEnv)
 }
 
-## Function to Merge CSV fils from the Select Input Directory
-MergeCSVFileList.Function <- function(ListCSVFilePath, MergedObjectName){
-  for (FileI in 1:length(ListCSVFilePath)){
-    CSVFilePathI <- ListCSVFilePath[FileI] # Defines the Path of the File to be processed
-    CSVFilenameI <- basename(CSVFilePathI) # Get the Filename of the File being processed
-    CSVFilenameICompoments <- unlist(strsplit(as.character(CSVFilenameI),".", fixed=TRUE))
-    CSVFilenameINoExt<-CSVFilenameICompoments[1]
-    #  CSVFilenameINoExt <- gsub(".csv","", CSVFilenameI, ignore.case = TRUE) # Create a filename without extension
-    DataI <- read.table(CSVFilePathI, sep = ",", header = TRUE, nrows = 100000)
-    DataI$File_ID<-rep(CSVFilenameINoExt, dim(DataI)[1])
+## Function to Merge files from the Select Input Directory
+MergeInputFile.Function <- function(ListFilePath, MergedObjectName){
+  for (FileI in 1:length(ListFilePath)){
+    FilePathI <- ListFilePath[FileI] # Defines the Path of the File to be processed
+    FilenameI <- basename(FilePathI) # Get the Filename of the File being processed
+    FilenameICompoments <- unlist(strsplit(as.character(FilenameI),".", fixed=TRUE))
+    FilenameINoExt<-FilenameICompoments[1]
+    #  FilenameINoExt <- gsub(".txt","", FilenameI, ignore.case = TRUE) # Create a filename without extension
+    DataI <- read.table(FilePathI, sep = "\t", header = TRUE, nrows = 100000)
+    DataI$File_ID<-rep(FilenameINoExt, dim(DataI)[1])
     if(FileI==1){
       MergedData<-DataI
     } else {
@@ -100,10 +100,11 @@ MergeCSVFileList.Function <- function(ListCSVFilePath, MergedObjectName){
   assign(MergedObjectName, MergedData, envir=.GlobalEnv)
 }
 
-# Function to Select a given CSV File
-SelectCSVFile.Function <- function(DialogMessage, DataObjectName){
-  DataFilePath<-tk_choose.files(default = getwd(), caption = DialogMessage, filters=matrix(c("CSV File",".csv"),1,2, byrow=TRUE), multi=FALSE)
-  Data<-read.table(DataFilePath, header=TRUE, sep=",", colClasses = "character")
+# Function to Select a given File with FileExt
+SelectFile.Function <- function(DialogMessage, DataObjectName, FileExt){
+ # DataFilePath<-tk_choose.files(default = getwd(), caption = DialogMessage, filters=matrix(c(paste0(FileExt," File"),paste0(".",FileExt)),1,2, byrow=TRUE), multi=FALSE)
+  DataFilePath<-tk_choose.files(default = getwd(), caption = DialogMessage, multi=FALSE)
+  Data<-read.table(DataFilePath, header=TRUE, sep = "\t", colClasses = "character")
   assign(DataObjectName, Data, envir=.GlobalEnv)
 }
 
@@ -136,20 +137,21 @@ InstallRequiredPackage.Function(ListPackage=ListRequiredPackage)
 
 
 # Select and Read the Data ------------------------------------------------------------
-# Select the Input Data and Get list of CSV files
-SelectCSVDir.Function(DialogMessage = "Choose the folder containing the CSV Data Files.",
+# Select the Input Data and Get list of Data files
+SelectInputDir.Function(DialogMessage = "Choose the folder containing the Data Files.",
                       DirPathObjectName="InputDirPath",
                       DirNameObjectName="InputDirName",
                       ListFilePathObjectName="ListInputFilePath",
-                      ParentDirPathObjectName="ParentInputDirPath"
+                      ParentDirPathObjectName="ParentInputDirPath",
+                      FileEXT="TXT"
 )
 setwd(InputDirPath)
-# Merge all Input CSV Files into one
-MergeCSVFileList.Function(ListCSVFilePath=ListInputFilePath, MergedObjectName="MergedInputData")
+# Merge all Input data Files into one
+MergeInputFile.Function(ListFilePath=ListInputFilePath, MergedObjectName="MergedInputData")
 
 
 # Select the RegistrationData and Registrtion coordinates
-SelectCSVFile.Function(DialogMessage="Select the Registration Coordinates CSV File", DataObjectName = "RegistrationData")
+SelectFile.Function(DialogMessage="Select the Registration Coordinates File", DataObjectName = "RegistrationData", FileExt="TXT")
 
 
 # Create OuputDirectory and Subdirectory
@@ -304,7 +306,7 @@ if((any(colnames(MergedInputData)=="Channel")==TRUE )) { # Marker Name is factor
     
   } else  if(nlevels(MergedInputData$Marker_ID)>1){
     # Prompt for Marker Information
-    SelectCSVFile.Function(DialogMessage="Select the Marker Information CSV File", DataObjectName = "MarkerData")
+    SelectFile.Function(DialogMessage="Select the Marker Information File", DataObjectName = "MarkerData", FileExt="txt")
     MarkerData$Marker_ID<-as.factor(sprintf("%03d", as.numeric(as.character(MarkerData$Marker_ID))))
     
     # Get the Marker_Name from the marker_ID in the MarkerData
@@ -314,6 +316,8 @@ if((any(colnames(MergedInputData)=="Channel")==TRUE )) { # Marker Name is factor
     }
     
   } ## End of Get MarkerName
+  
+  
   MergedInputData$Marker_Name<-factor( MergedInputData$Marker_Name)
   # Create a Channel by the combination of MarkerName and Channel
   
@@ -406,7 +410,7 @@ for (FileI in 1:length(RegistrationData$File_ID)){
   
 }
 MetaData<-RegistrationData
-write.table(MetaData, file=file.path(OutputDirPath, "Metadata.csv"), row.names=FALSE, sep = ",")
+write.table(MetaData, file=file.path(OutputDirPath, "Metadata.txt"), row.names=FALSE, sep = "\t")
 
 
 # Process each File separatly -------------------------------------------------------
@@ -475,7 +479,7 @@ for (FileI in 1:nlevels(MergedInputData$File_ID)){
   } else {
     OutputData<-rbind(OutputData, OutputDataI)
   }
-  write.table(OutputData, file=file.path(OutputDirPath, "Data_Coordinates_Processed.csv"), row.names=FALSE, sep = ",")
+  write.table(OutputData, file=file.path(OutputDirPath, "Data_Coordinates_Processed.txt"), row.names=FALSE, sep = "\t")
 }
 
 
@@ -485,7 +489,7 @@ OutputData$File_ID<-factor(OutputData$File_ID)
 for (FileI in 1:nlevels(OutputData$File_ID)){
   File_IDI<-levels(OutputData$File_ID)[FileI]
   OutputDataI<-OutputData[OutputData$File_ID==File_IDI,] # Get the Data of a given Image
-  write.table(OutputDataI, file=file.path(OutputDirPath, "Tables by File",paste0(File_IDI,".csv")), row.names=FALSE, sep = ",")
+  write.table(OutputDataI, file=file.path(OutputDirPath, "Tables by File",paste0(File_IDI,".txt")), row.names=FALSE, sep = "\t")
   
   if(FileI==1){
     dir.create(file.path(OutputDirPath, "Graphs by File","Raw"))
@@ -664,7 +668,7 @@ for (SubjectI in 1:nlevels(OutputData$Subject_ID)){
   OutputDataI$File_ID<-factor(OutputDataI$File_ID)
   OutputDataI$Subject_ID<-factor(OutputDataI$Subject_ID)
   
-  write.table(OutputDataI, file=file.path(OutputDirPath, "Tables by Subject",paste0(Subject_IDI,".csv")), row.names=FALSE, sep = ",")
+  write.table(OutputDataI, file=file.path(OutputDirPath, "Tables by Subject",paste0(Subject_IDI,".txt")), row.names=FALSE, sep = "\t")
   
   if(SubjectI==1){
     dir.create(file.path(OutputDirPath, "Graphs by Subject","Raw"))
@@ -1157,9 +1161,9 @@ for (SubjectI in 1:nlevels(OutputData$Subject_ID)){
       Weighted_Density_OutputDataI_MarkerI_Left<-Normalized_Density_OutputDataI_MarkerI_Left
       Weighted_Density_OutputDataI_MarkerI_Left$z<- dim(OutputDataI_MarkerI_Left)[1] * Normalized_Density_OutputDataI_MarkerI_Left$z
       
-      write.table(Density_OutputDataI_MarkerI_Left, file=file.path(OutputDirPath, "Tables by Subject", "Density Raw",paste0(Subject_IDI,"_",Marker_NameI,"_Left.csv")), row.names=FALSE, sep = ",")
-      write.table(Normalized_Density_OutputDataI_MarkerI_Left, file=file.path(OutputDirPath, "Tables by Subject", "Density Normalized",paste0(Subject_IDI,"_",Marker_NameI,"_Left.csv")), row.names=FALSE, sep = ",")
-      write.table(Weighted_Density_OutputDataI_MarkerI_Left, file=file.path(OutputDirPath, "Tables by Subject", "Density Weighted",paste0(Subject_IDI,"_",Marker_NameI,"_Left.csv")), row.names=FALSE, sep = ",")
+      write.table(Density_OutputDataI_MarkerI_Left, file=file.path(OutputDirPath, "Tables by Subject", "Density Raw",paste0(Subject_IDI,"_",Marker_NameI,"_Left.txt")), row.names=FALSE, sep = "\t")
+      write.table(Normalized_Density_OutputDataI_MarkerI_Left, file=file.path(OutputDirPath, "Tables by Subject", "Density Normalized",paste0(Subject_IDI,"_",Marker_NameI,"_Left.txt")), row.names=FALSE, sep = "\t")
+      write.table(Weighted_Density_OutputDataI_MarkerI_Left, file=file.path(OutputDirPath, "Tables by Subject", "Density Weighted",paste0(Subject_IDI,"_",Marker_NameI,"_Left.txt")), row.names=FALSE, sep = "\t")
       
       
       contour(Normalized_Density_OutputDataI_MarkerI_Left,
@@ -1177,9 +1181,9 @@ for (SubjectI in 1:nlevels(OutputData$Subject_ID)){
       Normalized_Density_OutputDataI_MarkerI_Right$z<- ((Density_OutputDataI_MarkerI_Right$z-min(Density_OutputDataI_MarkerI_Right$z))/(max(Density_OutputDataI_MarkerI_Right$z)-min(Density_OutputDataI_MarkerI_Right$z)))
       Weighted_Density_OutputDataI_MarkerI_Right<- Normalized_Density_OutputDataI_MarkerI_Right
       Weighted_Density_OutputDataI_MarkerI_Right$z<- dim(OutputDataI_MarkerI_Right)[1] * Weighted_Density_OutputDataI_MarkerI_Right$z
-      write.table(Density_OutputDataI_MarkerI_Right, file=file.path(OutputDirPath, "Tables by Subject", "Density Raw",paste0(Subject_IDI,"_",Marker_NameI,"_Right.csv")), row.names=FALSE, sep = ",")
-      write.table(Normalized_Density_OutputDataI_MarkerI_Right, file=file.path(OutputDirPath, "Tables by Subject", "Density Normalized",paste0(Subject_IDI,"_",Marker_NameI,"_Right.csv")), row.names=FALSE, sep = ",")
-      write.table(Weighted_Density_OutputDataI_MarkerI_Right, file=file.path(OutputDirPath, "Tables by Subject", "Density Weighted",paste0(Subject_IDI,"_",Marker_NameI,"_Right.csv")), row.names=FALSE, sep = ",")
+      write.table(Density_OutputDataI_MarkerI_Right, file=file.path(OutputDirPath, "Tables by Subject", "Density Raw",paste0(Subject_IDI,"_",Marker_NameI,"_Right.txt")), row.names=FALSE, sep = "\t")
+      write.table(Normalized_Density_OutputDataI_MarkerI_Right, file=file.path(OutputDirPath, "Tables by Subject", "Density Normalized",paste0(Subject_IDI,"_",Marker_NameI,"_Right.txt")), row.names=FALSE, sep = "\t")
+      write.table(Weighted_Density_OutputDataI_MarkerI_Right, file=file.path(OutputDirPath, "Tables by Subject", "Density Weighted",paste0(Subject_IDI,"_",Marker_NameI,"_Right.txt")), row.names=FALSE, sep = "\t")
       
       contour(Normalized_Density_OutputDataI_MarkerI_Right,
               add = TRUE, drawlabels = FALSE,
@@ -1394,7 +1398,7 @@ for (RowI in 1:length(SummaryData$Subject_ID)){
   
 } ## End of Rowi
 
-write.table(SummaryData, file=file.path(OutputDirPath, paste0("Summary_Data.csv")), row.names=FALSE, sep = ",")
+write.table(SummaryData, file=file.path(OutputDirPath, paste0("Summary_Data.txt")), row.names=FALSE, sep = "\t")
 
   
 
@@ -1410,7 +1414,7 @@ write.table(SummaryData, file=file.path(OutputDirPath, paste0("Summary_Data.csv"
 # for(GroupI in 1:nlevels(OutputData$Group)){
 #   Group_NameI<-levels(OutputData$Group)[GroupI]
 #   Data_GroupI<-OutputData[OutputData$Group==Group_NameI,]
-#   write.table(Data_GroupI, file=file.path(OutputDirPath, "Tables by Group",paste0(Group_NameI,"_Data.csv")), row.names=FALSE, sep = ",")
+#   write.table(Data_GroupI, file=file.path(OutputDirPath, "Tables by Group",paste0(Group_NameI,"_Data.csv")), row.names=FALSE, sep = "\t")
 #   assign(paste0(as.name(Group_NameI),"Data"), Data_GroupI)
 # }
 # 
@@ -1419,10 +1423,10 @@ write.table(SummaryData, file=file.path(OutputDirPath, paste0("Summary_Data.csv"
 # 
 # #Calculate the density limits are slightly above the normalized size limit
 # Density.Control<-kde2d(ControlData$X.Scaled, ControlData$Y.Scaled, n=100, lims=c(-1.5,1.5,-1.5,1.5))
-# write.table(Density.Control, file=file.path(OutputDirPath, "Tables","Density Control Data.csv"), row.names=FALSE, sep = ",")
+# write.table(Density.Control, file=file.path(OutputDirPath, "Tables","Density Control Data.csv"), row.names=FALSE, sep = "\t")
 # 
 # Density.Test<-kde2d(TestData$X.Scaled, TestData$Y.Scaled, n=100, lims=c(-1.5,1.5,-1.5,1.5))
-# write.table(Density.Test, file=file.path(OutputDirPath, "Tables","Density Capsaicin Data.csv"), row.names=FALSE, sep = ",")
+# write.table(Density.Test, file=file.path(OutputDirPath, "Tables","Density Capsaicin Data.csv"), row.names=FALSE, sep = "\t")
 # 
 # image(Density.Control, zlim=c(0.3,2))
 # #persp(Density.Control, phi = 30, theta = 10, d = 1)
@@ -1447,7 +1451,7 @@ write.table(SummaryData, file=file.path(OutputDirPath, paste0("Summary_Data.csv"
 # # 
 # # # Subset the data into control and test
 # # ControlData<-OutputData[OutputData$Group=="Control",]
-# # write.table(ControlData, file=file.path(OutputDirPath, "Tables","Control Data.csv"), row.names=FALSE, sep = ",")
+# # write.table(ControlData, file=file.path(OutputDirPath, "Tables","Control Data.csv"), row.names=FALSE, sep = "\t")
 # # RegistrationDataControl<-RegistrationData[RegistrationData$Group=="Control",]
 # # SummaryTableControl<-as.data.frame(table(ControlData$X_Scaled))
 # # SummaryTableControl$Var1<- as.numeric(as.character(SummaryTableControl$Var1))
@@ -1460,7 +1464,7 @@ write.table(SummaryData, file=file.path(OutputDirPath, paste0("Summary_Data.csv"
 # # 
 # # 
 # # TestData<-OutputData[OutputData$Group=="Test",]
-# # write.table(TestData, file=file.path(OutputDirPath, "Tables","Test Data.csv"), row.names=FALSE, sep = ",")
+# # write.table(TestData, file=file.path(OutputDirPath, "Tables","Test Data.csv"), row.names=FALSE, sep = "\t")
 # # RegistrationDataTest<-RegistrationData[RegistrationData$Group=="Test",]
 # # 
 # # SummaryTableTest<-as.data.frame(table(TestData$X_Scaled))
@@ -1648,13 +1652,13 @@ write.table(SummaryData, file=file.path(OutputDirPath, paste0("Summary_Data.csv"
 # # 
 # # # Use Bandwidth.nrd as a default
 # # Density.Total<-kde2d(OutputData$X_Scaled, OutputData$Y_Scaled, h=c(bandwidth.nrd(OutputData$X_Scaled),bandwidth.nrd(OutputData$Y_Scaled)), n=NbOfBin, lims=c(-1.2,1.2,-1.2,1.2))
-# # write.table(Density.Total, file=file.path(OutputDirPath, "Tables","Density_Total.csv"), row.names=FALSE, sep = ",")
+# # write.table(Density.Total, file=file.path(OutputDirPath, "Tables","Density_Total.csv"), row.names=FALSE, sep = "\t")
 # # #Alternative use width.SJ() for defining the h
 # # #Density.Total_ScaledSJ<-kde2d(OutputData$X_Scaled, OutputData$Y_Scaled, h=c(width.SJ(OutputData$X_Scaled),width.SJ(OutputData$Y_Scaled)), n=100, lims=c(-1.2,1.2,-1.2,1.2))
 # # 
 # # Density.Total.Norm<-Density.Total
 # # Density.Total.Norm$z<- round(  100*scale(  Density.Total$z, center=FALSE, scale=rep(      max(        Density.Total$z        ), dim(Density.Total$z)[2]      )    )   )
-# # write.table(Density.Total.Norm, file=file.path(OutputDirPath, "Tables","Density_Total_Norm.csv"), row.names=FALSE, sep = ",")
+# # write.table(Density.Total.Norm, file=file.path(OutputDirPath, "Tables","Density_Total_Norm.csv"), row.names=FALSE, sep = "\t")
 # # cairo_pdf(file.path(OutputDirPath, "Graphs", paste0("Density_Total_Norm.pdf"))) # Open the graph as pdf
 # # filled.contour(Density.Total.Norm, main="Density.Total.Norm",
 # #                levels=seq(0,max(c(Density.Total.Norm$z)), by=2),
@@ -1663,11 +1667,11 @@ write.table(SummaryData, file=file.path(OutputDirPath, paste0("Summary_Data.csv"
 # # dev.off()
 # # 
 # # Density.Control<-kde2d(ControlData$X_Scaled, ControlData$Y_Scaled, h=c(bandwidth.nrd(ControlData$X_Scaled),bandwidth.nrd(ControlData$Y_Scaled)), n=NbOfBin, lims=c(-1.2,1.2,-1.2,1.2))
-# # write.table(Density.Control, file=file.path(OutputDirPath, "Tables","Density_Control.csv"), row.names=FALSE, sep = ",")
+# # write.table(Density.Control, file=file.path(OutputDirPath, "Tables","Density_Control.csv"), row.names=FALSE, sep = "\t")
 # # 
 # # Density.Control.Norm<-Density.Control
 # # Density.Control.Norm$z<- round(  100*scale(  Density.Control$z, center=FALSE, scale=rep(      max(        Density.Control$z        ), dim(Density.Control$z)[2]      )    )   )
-# # write.table(Density.Control.Norm, file=file.path(OutputDirPath, "Tables","Density_Control_Norm.csv"), row.names=FALSE, sep = ",")
+# # write.table(Density.Control.Norm, file=file.path(OutputDirPath, "Tables","Density_Control_Norm.csv"), row.names=FALSE, sep = "\t")
 # # 
 # # cairo_pdf(file.path(OutputDirPath, "Graphs", paste0("Density_Control_Norm.pdf"))) # Open the graph as pdf
 # # filled.contour(Density.Control.Norm, main="Density.Control.Norm",
@@ -1677,11 +1681,11 @@ write.table(SummaryData, file=file.path(OutputDirPath, paste0("Summary_Data.csv"
 # # dev.off()
 # # 
 # # Density.Test<-kde2d(TestData$X_Scaled, TestData$Y_Scaled, h=c(bandwidth.nrd(TestData$X_Scaled),bandwidth.nrd(TestData$Y_Scaled)), n=NbOfBin, lims=c(-1.2,1.2,-1.2,1.2))
-# # write.table(Density.Test, file=file.path(OutputDirPath, "Tables","Density_Test.csv"), row.names=FALSE, sep = ",")
+# # write.table(Density.Test, file=file.path(OutputDirPath, "Tables","Density_Test.csv"), row.names=FALSE, sep = "\t")
 # # 
 # # Density.Test.Norm<-Density.Test
 # # Density.Test.Norm$z<- round(  100*scale(  Density.Test$z, center=FALSE, scale=rep(      max(        Density.Test$z        ), dim(Density.Test$z)[2]      )    )   )
-# # write.table(Density.Test.Norm, file=file.path(OutputDirPath, "Tables","Density_Test_Norm.csv"), row.names=FALSE, sep = ",")
+# # write.table(Density.Test.Norm, file=file.path(OutputDirPath, "Tables","Density_Test_Norm.csv"), row.names=FALSE, sep = "\t")
 # # cairo_pdf(file.path(OutputDirPath, "Graphs", paste0("Density_Test_Norm.pdf"))) # Open the graph as pdf
 # # filled.contour(Density.Test.Norm, main="Density.Test.Norm",
 # #                levels=seq(0,max(c(Density.Test.Norm$z)), by=2),
@@ -1693,10 +1697,10 @@ write.table(SummaryData, file=file.path(OutputDirPath, paste0("Summary_Data.csv"
 # # #PLOT WEIGHTED DATA
 # # Density.Control.Weighted<-Density.Control.Norm
 # # Density.Control.Weighted$z<-Density.Control.Norm$z * (dim(ControlData)[1])/100
-# # write.table(Density.Control.Weighted, file=file.path(OutputDirPath, "Tables","Density_Control_Weighted.csv"), row.names=FALSE, sep = ",")
+# # write.table(Density.Control.Weighted, file=file.path(OutputDirPath, "Tables","Density_Control_Weighted.csv"), row.names=FALSE, sep = "\t")
 # # Density.Test.Weighted<-Density.Test.Norm
 # # Density.Test.Weighted$z<-Density.Test.Norm$z * (dim(TestData)[1])/100
-# # write.table(Density.Test.Weighted, file=file.path(OutputDirPath, "Tables","Density_Test_Weighted.csv"), row.names=FALSE, sep = ",")
+# # write.table(Density.Test.Weighted, file=file.path(OutputDirPath, "Tables","Density_Test_Weighted.csv"), row.names=FALSE, sep = "\t")
 # # 
 # # cairo_pdf(file.path(OutputDirPath, "Graphs", paste0("Density_Control_Weighted.pdf"))) # Open the graph as pdf
 # # filled.contour(Density.Control.Weighted,
@@ -1874,7 +1878,7 @@ write.table(SummaryData, file=file.path(OutputDirPath, paste0("Summary_Data.csv"
 # # 
 # # # Subset the data into control and test
 # # ControlData<-OutputData[OutputData$Group=="Control",]
-# # write.table(ControlData, file=file.path(OutputDirPath, "Tables","Control Data.csv"), row.names=FALSE, sep = ",")
+# # write.table(ControlData, file=file.path(OutputDirPath, "Tables","Control Data.csv"), row.names=FALSE, sep = "\t")
 # # MetaDataControl<-MetaData[MetaData$Group=="Control",]
 # # SummaryTableControl<-as.data.frame(table(ControlData$X.Scaled))
 # # SummaryTableControl$Var1<- as.numeric(as.character(SummaryTableControl$Var1))
@@ -1887,7 +1891,7 @@ write.table(SummaryData, file=file.path(OutputDirPath, paste0("Summary_Data.csv"
 # # 
 # # 
 # # TestData<-OutputData[OutputData$Group=="Test",]
-# # write.table(TestData, file=file.path(OutputDirPath, "Tables","Test Data.csv"), row.names=FALSE, sep = ",")
+# # write.table(TestData, file=file.path(OutputDirPath, "Tables","Test Data.csv"), row.names=FALSE, sep = "\t")
 # # MetaDataTest<-MetaData[MetaData$Group=="Test",]
 # # 
 # # SummaryTableTest<-as.data.frame(table(TestData$X.Scaled))
@@ -2075,13 +2079,13 @@ write.table(SummaryData, file=file.path(OutputDirPath, paste0("Summary_Data.csv"
 # # 
 # # # Use Bandwidth.nrd as a default
 # # Density.Total<-kde2d(OutputData$X.Scaled, OutputData$Y.Scaled, h=c(bandwidth.nrd(OutputData$X.Scaled),bandwidth.nrd(OutputData$Y.Scaled)), n=NbOfBin, lims=c(-1.2,1.2,-1.2,1.2))
-# # write.table(Density.Total, file=file.path(OutputDirPath, "Tables","Density_Total.csv"), row.names=FALSE, sep = ",")
+# # write.table(Density.Total, file=file.path(OutputDirPath, "Tables","Density_Total.csv"), row.names=FALSE, sep = "\t")
 # # #Alternative use width.SJ() for defining the h
 # # #Density.Total.ScaledSJ<-kde2d(OutputData$X.Scaled, OutputData$Y.Scaled, h=c(width.SJ(OutputData$X.Scaled),width.SJ(OutputData$Y.Scaled)), n=100, lims=c(-1.2,1.2,-1.2,1.2))
 # # 
 # # Density.Total.Norm<-Density.Total
 # # Density.Total.Norm$z<- round(  100*scale(  Density.Total$z, center=FALSE, scale=rep(      max(        Density.Total$z        ), dim(Density.Total$z)[2]      )    )   )
-# # write.table(Density.Total.Norm, file=file.path(OutputDirPath, "Tables","Density_Total_Norm.csv"), row.names=FALSE, sep = ",")
+# # write.table(Density.Total.Norm, file=file.path(OutputDirPath, "Tables","Density_Total_Norm.csv"), row.names=FALSE, sep = "\t")
 # # cairo_pdf(file.path(OutputDirPath, "Graphs", paste0("Density_Total_Norm.pdf"))) # Open the graph as pdf
 # # filled.contour(Density.Total.Norm, main="Density.Total.Norm",
 # #                levels=seq(0,max(c(Density.Total.Norm$z)), by=2),
@@ -2090,11 +2094,11 @@ write.table(SummaryData, file=file.path(OutputDirPath, paste0("Summary_Data.csv"
 # # dev.off()
 # # 
 # # Density.Control<-kde2d(ControlData$X.Scaled, ControlData$Y.Scaled, h=c(bandwidth.nrd(ControlData$X.Scaled),bandwidth.nrd(ControlData$Y.Scaled)), n=NbOfBin, lims=c(-1.2,1.2,-1.2,1.2))
-# # write.table(Density.Control, file=file.path(OutputDirPath, "Tables","Density_Control.csv"), row.names=FALSE, sep = ",")
+# # write.table(Density.Control, file=file.path(OutputDirPath, "Tables","Density_Control.csv"), row.names=FALSE, sep = "\t")
 # # 
 # # Density.Control.Norm<-Density.Control
 # # Density.Control.Norm$z<- round(  100*scale(  Density.Control$z, center=FALSE, scale=rep(      max(        Density.Control$z        ), dim(Density.Control$z)[2]      )    )   )
-# # write.table(Density.Control.Norm, file=file.path(OutputDirPath, "Tables","Density_Control_Norm.csv"), row.names=FALSE, sep = ",")
+# # write.table(Density.Control.Norm, file=file.path(OutputDirPath, "Tables","Density_Control_Norm.csv"), row.names=FALSE, sep = "\t")
 # # 
 # # cairo_pdf(file.path(OutputDirPath, "Graphs", paste0("Density_Control_Norm.pdf"))) # Open the graph as pdf
 # # filled.contour(Density.Control.Norm, main="Density.Control.Norm",
@@ -2104,11 +2108,11 @@ write.table(SummaryData, file=file.path(OutputDirPath, paste0("Summary_Data.csv"
 # # dev.off()
 # # 
 # # Density.Test<-kde2d(TestData$X.Scaled, TestData$Y.Scaled, h=c(bandwidth.nrd(TestData$X.Scaled),bandwidth.nrd(TestData$Y.Scaled)), n=NbOfBin, lims=c(-1.2,1.2,-1.2,1.2))
-# # write.table(Density.Test, file=file.path(OutputDirPath, "Tables","Density_Test.csv"), row.names=FALSE, sep = ",")
+# # write.table(Density.Test, file=file.path(OutputDirPath, "Tables","Density_Test.csv"), row.names=FALSE, sep = "\t")
 # # 
 # # Density.Test.Norm<-Density.Test
 # # Density.Test.Norm$z<- round(  100*scale(  Density.Test$z, center=FALSE, scale=rep(      max(        Density.Test$z        ), dim(Density.Test$z)[2]      )    )   )
-# # write.table(Density.Test.Norm, file=file.path(OutputDirPath, "Tables","Density_Test_Norm.csv"), row.names=FALSE, sep = ",")
+# # write.table(Density.Test.Norm, file=file.path(OutputDirPath, "Tables","Density_Test_Norm.csv"), row.names=FALSE, sep = "\t")
 # # cairo_pdf(file.path(OutputDirPath, "Graphs", paste0("Density_Test_Norm.pdf"))) # Open the graph as pdf
 # # filled.contour(Density.Test.Norm, main="Density.Test.Norm",
 # #                levels=seq(0,max(c(Density.Test.Norm$z)), by=2),
@@ -2120,10 +2124,10 @@ write.table(SummaryData, file=file.path(OutputDirPath, paste0("Summary_Data.csv"
 # # #PLOT WEIGHTED DATA
 # # Density.Control.Weighted<-Density.Control.Norm
 # # Density.Control.Weighted$z<-Density.Control.Norm$z * (dim(ControlData)[1])/100
-# # write.table(Density.Control.Weighted, file=file.path(OutputDirPath, "Tables","Density_Control_Weighted.csv"), row.names=FALSE, sep = ",")
+# # write.table(Density.Control.Weighted, file=file.path(OutputDirPath, "Tables","Density_Control_Weighted.csv"), row.names=FALSE, sep = "\t")
 # # Density.Test.Weighted<-Density.Test.Norm
 # # Density.Test.Weighted$z<-Density.Test.Norm$z * (dim(TestData)[1])/100
-# # write.table(Density.Test.Weighted, file=file.path(OutputDirPath, "Tables","Density_Test_Weighted.csv"), row.names=FALSE, sep = ",")
+# # write.table(Density.Test.Weighted, file=file.path(OutputDirPath, "Tables","Density_Test_Weighted.csv"), row.names=FALSE, sep = "\t")
 # # 
 # # cairo_pdf(file.path(OutputDirPath, "Graphs", paste0("Density_Control_Weighted.pdf"))) # Open the graph as pdf
 # # filled.contour(Density.Control.Weighted,
