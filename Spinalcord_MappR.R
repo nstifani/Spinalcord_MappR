@@ -9,7 +9,6 @@
 ## PostScriptTrace("Mouse_SC_L4_Normalized.ai")
 
 
-
 # Functions ---------------------------------------------------------------
 rm(list=ls()) # Clear the workspace just in case you have old stuff there
 
@@ -161,6 +160,12 @@ CreateOutputDir.Function(OutputDirLocation=ParentInputDirPath,
                          SubDirList=c("Graphs by File", "Tables by File","Graphs by Subject", "Tables by Subject","Graphs by Group", "Tables by Group") )
 
 # Select the XML SC Layout
+#Create a XML Layout from a Vector File
+#SC_Layout_Vector_File<-file.choose("Select the file of the SC Layout")
+# Create the 
+#setwd(dirname(SC_Layout_Vector_File))
+#PostScriptTrace(SC_Layout_Vector_File)
+
 SC_Layout_File<-file.choose("Select the XML file of the SC Layout")
 SpinalCordLayout<-readPicture(SC_Layout_File)
 
