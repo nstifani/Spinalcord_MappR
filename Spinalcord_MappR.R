@@ -168,6 +168,7 @@ CreateOutputDir.Function(OutputDirLocation=ParentInputDirPath,
 
 SC_Layout_File<-file.choose("Select the XML file of the SC Layout")
 SpinalCordLayout<-readPicture(SC_Layout_File)
+# /Users/Nicolas/Documents/Spinalcord_MappR/SC_Layouts/Mouse_SC_L4_Normalized.xml
 
 # Pre-Process RegistrationData  ---------------------------------------------------
 # Convert Registration Data to Numeric values
