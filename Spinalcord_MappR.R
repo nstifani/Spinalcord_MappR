@@ -94,7 +94,7 @@ MergeInputFile.Function <- function(ListFilePath, MergedObjectName){
     if(FileI==1){
       MergedData<-DataI
     } else {
-      MergedData<-rbind(MergedData, DataI)
+      MergedData<-rbind.fill(MergedData, DataI)
     }
   }
   assign(MergedObjectName, MergedData, envir=.GlobalEnv)
@@ -132,7 +132,7 @@ BlueToRedPalette<-function(NbOfColor, Transparency){
 
 # HouseKeeping ------------------------------------------------------------
 # Install Required Packages
-ListRequiredPackage=c("zoo", "tcltk", "MASS", "Hotelling","ggplot2", "car", "grImport")
+ListRequiredPackage=c("zoo", "tcltk", "MASS", "Hotelling","ggplot2", "car", "grImport", "plyr")
 InstallRequiredPackage.Function(ListPackage=ListRequiredPackage)
 
 
@@ -248,7 +248,7 @@ if((any(colnames(MergedInputData)=="Channel")==TRUE )) { # Marker Name is factor
   }
   # Create Marker_ID
   MergedInputData$Marker_ID<-as.factor(sprintf("%03d", as.numeric(as.character(MergedInputData$Counter))))
-  
+  # MergedInputData$Marker_ID<-factor(000)
   if(nlevels(MergedInputData$Marker_ID)==1){
     # Prompt String Marker_Name
     PromptNameDialog <- tktoplevel()
